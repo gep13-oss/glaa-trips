@@ -1,8 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
         <TargetFramework>netcoreapp2.1</TargetFramework>
         <MvcRazorCompileOnPublish>true</MvcRazorCompileOnPublish>
+        <ApplicationInsightsResourceId>/subscriptions/f09b7373-9dee-4515-87c9-e847d498e990/resourceGroups/rg-glaa-trips/providers/microsoft.insights/components/glaa-trips</ApplicationInsightsResourceId>
+        <UserSecretsId>5966cb71-2501-4cab-a0aa-77b24d37f516</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
@@ -10,6 +12,7 @@
         <PackageReference Include="LigerShark.WebOptimizer.Core" Version="1.0.236" />
         <PackageReference Include="LigerShark.WebOptimizer.Sass" Version="1.0.34-beta" />
         <PackageReference Include="LigerShark.WebOptimizer.TypeScript" Version="2.5.10-beta" />
+        <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.15.0" />
         <PackageReference Include="Microsoft.AspNetCore.All" />
         <PackageReference Include="SkiaSharp" Version="1.68.3" />
         <PackageReference Include="WebEssentials.AspNetCore.CdnTagHelpers" Version="1.0.21" />
