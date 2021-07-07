@@ -21,7 +21,7 @@ namespace glaa_trips.Models
             using (var inputStream = new SKManagedStream(imageStream))
             using (var codec = SKCodec.Create(inputStream))
             using (var original = SKBitmap.Decode(codec))
-            using (var image = HandleOrientation(original, codec.Origin))
+            using (var image = HandleOrientation(original, codec.EncodedOrigin))
             {
                 foreach (ImageType type in Enum.GetValues(typeof(ImageType)))
                 {
@@ -31,7 +31,7 @@ namespace glaa_trips.Models
                     string thumbnailPath = Path.Combine(dir, $"{displayName}-{width}x{height}{ext}");
                     var info = new SKImageInfo(width, height);
 
-                    using (var resized = image.Resize(info, SKBitmapResizeMethod.Lanczos3))
+                    using (var resized = image.Resize(info, SKFilterQuality.High))
                     using (var thumb = SKImage.FromBitmap(resized))
                     using (var fs = new FileStream(thumbnailPath, FileMode.CreateNew, FileAccess.ReadWrite))
                     {
@@ -60,12 +60,12 @@ namespace glaa_trips.Models
         }
 
         // Got the code from https://stackoverflow.com/a/45620498/1074470
-        private static SKBitmap HandleOrientation(SKBitmap bitmap, SKCodecOrigin orientation)
+        private static SKBitmap HandleOrientation(SKBitmap bitmap, SKEncodedOrigin orientation)
         {
             SKBitmap rotated;
             switch (orientation)
             {
-                case SKCodecOrigin.BottomRight:
+                case SKEncodedOrigin.BottomRight:
 
                     using (var surface = new SKCanvas(bitmap))
                     {
@@ -75,7 +75,7 @@ namespace glaa_trips.Models
 
                     return bitmap;
 
-                case SKCodecOrigin.RightTop:
+                case SKEncodedOrigin.RightTop:
                     rotated = new SKBitmap(bitmap.Height, bitmap.Width);
 
                     using (var surface = new SKCanvas(rotated))
@@ -87,7 +87,7 @@ namespace glaa_trips.Models
 
                     return rotated;
 
-                case SKCodecOrigin.LeftBottom:
+                case SKEncodedOrigin.LeftBottom:
                     rotated = new SKBitmap(bitmap.Height, bitmap.Width);
 
                     using (var surface = new SKCanvas(rotated))
