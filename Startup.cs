@@ -26,7 +26,6 @@ namespace glaa_trips
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()
-                .UseKestrel(a => a.AddServerHeader = false)
                 .Build();
 
         public IConfiguration Configuration { get; }
