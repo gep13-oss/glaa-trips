@@ -1,0 +1,48 @@
+@page
+@inject AlbumCollection ac
+@{
+    ViewData["Title"] = "Albums";
+    ViewData["Description"] = $"An online gallery where I share my photos with the world. Currently showing {ac.Albums.Count} albums ({string.Join(", ", ac.Albums.Select(a => a.Name))})";
+    ViewData["Image"] = Request.Scheme + "://" + Request.Host + ac.Albums.FirstOrDefault()?.CoverPhoto?.GetThumbnailLink((int)ImageType.Full, out int h);
+}
+
+<form id="admin" if-authorized method="post" action="~/album/new/create/">
+    <input type="text" name="name" id="name" aria-label="Album name" placeholder="Album name" required />
+    <input type="submit" id="newalbum" data-progress="Creating..." value="New album">
+</form>
+
+@if (ac.Albums.Count == 0)
+{
+    <p>There are no albums yet. <a asp-page="Login">Sign in</a> to create new albums and upload photos.</p>
+}
+
+<h2>Albums</h2>
+
+<div class="albumlist pic">
+    @{
+        foreach (Album album in ac.Albums)
+        {
+            var photo = album.CoverPhoto;
+            if (photo != null)
+            {
+                <a href="/album/@album.UrlName/" data-text="@album.Name (@album.Photos.Count)">
+                    <img photo="@photo" type="Thumbnail" />
+                </a>
+            }
+            else
+            {
+                <a href="/album/@album.UrlName/" data-text="@album.Name">
+
+                </a>
+            }
+        }
+    }
+</div>
+
+@section head {
+    <link if-authorized rel="stylesheet" href="/css/admin.scss" />
+}
+
+@section scripts {
+    <script if-authorized src="/js/admin.js" async></script>
+}

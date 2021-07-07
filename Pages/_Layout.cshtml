@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/WebPage">
+<head prefix="og: http://ogp.me/ns#">
+    <meta charset="utf-8" />
+    <title itemprop="name">@ViewData["Title"] - My Photo Gallery</title>
+    <meta name="description" content="@ViewData["Description"]" />
+    <meta name="keywords" content="@ViewData["Title"], photo, picture, gallery, images" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/css/site.scss" inline />
+    @RenderSection("head", required: false)
+    <meta name="application-name" content="@ViewData["Title"]" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="@ViewData["Title"]" />
+    <meta property="og:description" content="@ViewData["Description"]" />
+    <meta property="og:url" content="@(Context.Request.Scheme + "://" + Context.Request.Host + Context.Request.Path)" />
+    <meta property="og:image" content="@ViewData["Image"]" />
+    <link rel="shortcut icon" href="~/img/icon16x16.png" />
+    <link rel="apple-touch-icon" href="~/img/icon180x180.png" sizes="180x180" />
+</head>
+<body>
+    <div itemscope itemtype="http://schema.org/BreadcrumbList" itemprop="breadcrumb">
+        <header>
+            <div class="container" itemscope itemprop="itemListElement" itemtype="http://schema.org/ListItem">
+                <h1>
+                    <a href="~/" title="Back to the home page" itemscope itemtype="http://schema.org/Thing" itemprop="item">
+                        <span itemprop="name">My Photo Gallery</span>
+                    </a>
+                </h1>
+                <meta itemprop="position" content="1" />
+            </div>
+        </header>
+
+        <main class="container">
+            @RenderBody()
+            @{await Html.RenderPartialAsync("_SocialButtons.cshtml", ViewData["Title"]);}
+        </main>
+    </div>
+
+    <footer>
+        <p class="container">
+            Fork me on <a href="https://github.com/madskristensen/glaa_trips" rel="noreferrer noopener" title="See the source code">GitHub</a>
+            @{await Html.RenderPartialAsync("_LoginButton.cshtml");}
+        </p>
+    </footer>
+
+    <script src="/js/site.js" inline></script>
+    @RenderSection("scripts", required: false)
+
+    <meta itemprop="description" content="@ViewData["Description"]" />
+    <meta itemprop="image" content="@ViewData["Image"]" />
+</body>
+</html>

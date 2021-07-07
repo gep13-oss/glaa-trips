@@ -1,0 +1,62 @@
+@page "{albumName}/{photoName}/{handler?}"
+@model PhotoModel
+@{
+    ViewData["Title"] = $"{Model.Photo.DisplayName} - {Model.Photo.Album.Name}";
+    ViewData["Description"] = $"{Model.Photo.DisplayName} from the album {Model.Photo.Album.Name}";
+    ViewData["Image"] = Request.Scheme + "://" + Request.Host + Model.Photo.GetThumbnailLink((int)ImageType.Full, out int h);
+}
+
+<div id="admin" if-authorized>
+    <form method="post">
+        <input type="text" name="name" aria-label="Name" required value="@Model.Photo.DisplayName" />
+        <input type="submit" asp-page-handler="rename" data-progress="Renaming..." value="Rename photo" />
+    </form>
+
+    <form method="post" class="delete">
+        <input type="submit" id="deletephoto" asp-page-handler="delete" aria-label="Delete photo..." title="Delete photo..." value="X" />
+    </form>
+</div>
+
+<div class="title" itemscope itemtype="http://schema.org/ListItem" itemprop="itemListElement">
+    <paging model="@Model.Photo" />
+    <h2 itemscope itemtype="http://schema.org/Thing" itemprop="item">
+        <span itemprop="name">@Model.Photo.DisplayName</span>
+    </h2>
+    <meta itemprop="position" content="3" />
+</div>
+
+<div class="photo">
+    <div class="pic">
+        <img photo="@Model.Photo" type="Full" />
+    </div>
+
+    <aside itemscope itemtype="http://schema.org/ListItem" itemprop="itemListElement">
+        <meta itemprop="position" content="2" />
+        <span>
+            Posted in:
+            <a href="@Model.Photo.Album.Link" itemscope itemtype="http://schema.org/Thing" itemprop="item">
+                <span itemprop="name">@Model.Photo.Album.Name</span>
+            </a>
+        </span>
+        <a href="@Model.Photo.DownloadLink" class="download">Download</a>
+    </aside>
+</div>
+
+@section scripts{
+    <script if-authorized src="/js/admin.js" async></script>
+}
+
+@section head {
+    <link if-authorized rel="stylesheet" href="/css/admin.scss" />
+    <link rel="index" href="@Model.Photo.Album.Link" />
+    @if (Model.Photo.Next != null)
+    {
+        <link rel="next" href="@Model.Photo.Next.Link" />
+        <link rel="prefetch" href="@Model.Photo.Next.Link" />
+    }
+
+    @if (Model.Photo.Previous != null)
+    {
+        <link rel="prev" href="@Model.Photo.Previous.Link" />
+    }
+}

@@ -1,0 +1,201 @@
+$header-bgcolor: #444;
+$header-color: #fff;
+$body-color: #444;
+$body-bgcolor: #fff;
+$link-color: #0e5494;
+$footer-height: 30px;
+
+html {
+    position: relative;
+    min-height: 100%;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+}
+
+body {
+    margin: 0 auto $footer-height + 40px auto;
+    padding: 0;
+    color: $body-color;
+    background-color: $body-bgcolor;
+    font: 16px/1.4 "trebuchet ms", palatino, tahoma, sans-serif;
+}
+
+.container {
+    display: block;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+header {
+    margin: 0 0 20px 0;
+    padding: 0;
+    background-color: $header-bgcolor;
+
+    h1 {
+        margin: 0;
+        font-weight: normal;
+        line-height: 60px;
+    }
+
+    h1 a {
+        color: $header-color;
+        text-decoration: none;
+    }
+}
+
+a {
+    color: $link-color;
+}
+
+img {
+    border: none;
+}
+
+.title {
+    line-height: 2em;
+    margin-bottom: .5em;
+
+    h2 {
+        margin: 0;
+        max-width: 70%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    > nav {
+        float: right;
+    }
+}
+
+.pic {
+    img {
+        display: block;
+        width: 100%;
+        opacity: 0;
+        -moz-transition: opacity 500ms ease-in-out;
+        -o-transition: opacity 500ms ease-in-out;
+        -webkit-transition: opacity 500ms ease-in-out;
+        transition: opacity 500ms ease-in-out;
+        will-change: opacity;
+
+        &.loaded {
+            opacity: 1;
+        }
+    }
+
+    a {
+        background: #f1f1f1;
+        position: relative;
+        display: block;
+        margin-bottom: 2px;
+
+        &:after {
+            content: attr(data-text);
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            font-size: .9em;
+            line-height: 1.7;
+            text-indent: 5px;
+            background: rgba(0, 0, 0, .60);
+            color: $body-bgcolor;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            opacity: 0;
+            -moz-transition: opacity 300ms ease-in-out;
+            -o-transition: opacity 300ms ease-in-out;
+            -webkit-transition: opacity 300ms ease-in-out;
+            transition: opacity 300ms ease-in-out;
+        }
+
+        &:hover:after,
+        &:focus:after {
+            opacity: 1;
+        }
+    }
+}
+
+.albumlist {
+    display: flex;
+    flex-flow: row wrap;
+    margin: -2px;
+
+    > a {
+        flex-basis: 15%;
+        flex-grow: 1;
+        min-width: 196px;
+        margin: 1px;
+        width: 100%;
+
+        &:after {
+            opacity: 1;
+        }
+    }
+
+    img {
+        height: 175px;
+    }
+}
+
+.photolist {
+    margin-right: -2px;
+    margin-bottom: 20px;
+    -ms-column-gap: 2px;
+    -moz-column-gap: 2px;
+    -webkit-column-gap: 2px;
+    column-gap: 2px;
+    -ms-column-width: 190px;
+    -moz-column-width: 190px;
+    -webkit-column-width: 190px;
+    column-width: 190px;
+}
+
+.photo {
+    img {
+        margin-bottom: 8px;
+    }
+
+    .download {
+        float: right;
+    }
+}
+
+.socialsharing {
+    margin-top: 1em;
+
+    a {
+        display: inline-block;
+        margin-right: .6em;
+    }
+
+    svg {
+        width: 24px;
+        height: 24px;
+
+        path{
+            fill: gray;
+        }
+    }
+}
+
+footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: $footer-height;
+    text-align: center;
+
+    a:last-child {
+        float: right;
+    }
+}
+
+@media (max-width: 960px) {
+    .photo img {
+        height: auto;
+    }
+}
