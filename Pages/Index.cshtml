@@ -16,6 +16,15 @@
     <p>There are no albums yet. <a asp-page="Login">Sign in</a> to create new albums and upload photos.</p>
 }
 
+<!--The div element for the map -->
+<div id="map"></div>
+
+<!-- Async script executes immediately and must be after any DOM elements used in callback. -->
+<script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDZi8bHxkYFBMBFppbvPq9w6Uv0_pvMrE0&callback=initMap&libraries=&v=weekly"
+    async
+></script>
+
 <h2>Albums</h2>
 
 <div class="albumlist pic">
