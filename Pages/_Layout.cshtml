@@ -28,6 +28,7 @@
                     </a>
                 </h1>
                 <meta itemprop="position" content="1" />
+                @{await Html.RenderPartialAsync("_LoginButton.cshtml", ViewData["Title"]);}
             </div>
         </header>
 
