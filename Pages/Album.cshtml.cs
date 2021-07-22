@@ -9,7 +9,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.Json;
 using System.Threading.Tasks;
+using Slugify;
 
 namespace glaa_trips.Pages
 {
@@ -60,16 +62,58 @@ namespace glaa_trips.Pages
         }
 
         [Authorize]
-        public IActionResult OnPostCreate(string name)
+        public async Task<IActionResult> OnPostCreate(string name, string description, string visited, double latitude, double longitude)
         {
-            string path = Path.Combine(_environment.WebRootPath, "albums", name);
+            string markerJsonPath = Path.Combine(_environment.WebRootPath, "albums", "markers.json");
+            
+            SlugHelper helper = new SlugHelper();
+            string slugName = helper.GenerateSlug(name);
+
+            List<Marker> markers = null;
+
+            if (System.IO.File.Exists(markerJsonPath))
+            {
+                markers = JsonSerializer.Deserialize<List<Marker>>(System.IO.File.ReadAllText(markerJsonPath));
+            }
+            else
+            {
+                markers = new List<Marker>();
+            }
+
+            string path = Path.Combine(_environment.WebRootPath, "albums", slugName);
 
             Directory.CreateDirectory(path);
-            var album = new Album(path, _ac);
+
+            var metadataFileName = Path.Combine(path, "data.json");
+            var albumMetaData = new AlbumMetaData();
+            albumMetaData.Description = description;
+            albumMetaData.Visited = DateTime.Parse(visited);
+            albumMetaData.Latitude = latitude;
+            albumMetaData.Longitude = longitude;
+
+            var marker = new Marker();
+            marker.Lat = latitude;
+            marker.Long = longitude;
+            marker.Slug = slugName;
+
+            markers.Add(marker);
+
+            using (var createStream = System.IO.File.Create(metadataFileName))
+            {
+                await JsonSerializer.SerializeAsync<AlbumMetaData>(createStream, albumMetaData);
+            };
+
+            using (var createStream = System.IO.File.Create(markerJsonPath))
+            {
+                await JsonSerializer.SerializeAsync<List<Marker>>(createStream, markers);
+            };
+
+            var album = new Album(path, _ac, albumMetaData);
+                  
             _ac.Albums.Insert(0, album);
             _ac.Sort();
 
-            return new RedirectResult($"~/album/{WebUtility.UrlEncode(name).Replace('+', ' ')}/");
+            return new RedirectResult($"~/album/{slugName}/");
         }
 
         [Authorize]
