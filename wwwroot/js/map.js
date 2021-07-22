@@ -1,22 +1,39 @@
 // Initialize and add the map
+
+var map;
+
 function initMap() {
-    // The location of Uluru
-    const uluru = { lat: 57.4151, lng: -1.8325 };
-    // The map, centered at Uluru
-    const map = new google.maps.Map(document.getElementById("map"), {
-      zoom: 10,
-      center: uluru,
+    map = new google.maps.Map(document.getElementById("map"), {
+      zoom: 10
     });
-    // The marker, positioned at Uluru
-    const marker = new google.maps.Marker({
-      position: uluru,
-      title: "Slains Castle",
-      label: "Bob"
-    });
-  
-    marker.addListener("click", () => {
-      window.location.href = "http://127.0.0.1:5500/slains";
+
+    fetch('albums/markers.json')
+      .then(function(response){return response.json()})
+      .then(plotMarkers);
+  }
+
+  function plotMarkers(jsonBlob)
+  {
+    markers = [];
+    bounds = new google.maps.LatLngBounds();
+
+    jsonBlob.forEach(function(marker) {
+      var position = new google.maps.LatLng(marker.Lat, marker.Long);
+
+      var actualMarker = new google.maps.Marker({
+          position: position,
+          map: map,
+          animation: google.maps.Animation.DROP
         });
-  
-    marker.setMap(map);
+
+        actualMarker.addListener("click", () => {
+        window.location.href = "album/" + marker.Slug
+          });
+
+      markers.push(marker);
+    
+      bounds.extend(position);
+    });
+
+    map.fitBounds(bounds);
   }

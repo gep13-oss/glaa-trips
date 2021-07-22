@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,14 +10,35 @@ namespace glaa_trips.Models
         private AlbumCollection _ac;
 
         public Album(string absolutePath, AlbumCollection ac)
+            : this(absolutePath, ac, null)
+        {
+        }
+
+        public Album(string absolutePath, AlbumCollection ac, AlbumMetaData metaData)
         {
             _ac = ac;
             AbsolutePath = absolutePath;
             Name = new DirectoryInfo(AbsolutePath).Name;
             Photos = new List<Photo>();
+
+            if (metaData != null)
+            {
+                Description = metaData.Description;
+                Visited = metaData.Visited;
+                Latitude = metaData.Latitude;
+                Longitude = metaData.Longitude;
+            }
         }
 
         public string Name { get; }
+
+        public string Description { get; }
+
+        public DateTime Visited { get; }
+
+        public double Latitude { get; }
+
+        public double Longitude { get; }
 
         public string UrlName
         {
@@ -83,6 +105,5 @@ namespace glaa_trips.Models
         {
             Photos = Photos.OrderBy(p => p.DisplayName).ToList();
         }
-
     }
 }

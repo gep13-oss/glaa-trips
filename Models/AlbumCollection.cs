@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 namespace glaa_trips.Models
 {
@@ -51,7 +52,19 @@ namespace glaa_trips.Models
 
         private Album GetAlbum(string albumPath)
         {
-            var album = new Album(albumPath, this);
+            var metadataFileName = Path.Combine(albumPath, "data.json");
+            Album album = null;
+
+            if (File.Exists(metadataFileName))
+            {
+                var albumMetaData = JsonSerializer.Deserialize<AlbumMetaData>(File.ReadAllText(metadataFileName));
+                album = new Album(albumPath, this, albumMetaData);
+            }
+            else
+            {
+                album = new Album(albumPath, this);
+            }
+
             var directory = new DirectoryInfo(albumPath);
             var photos = directory.EnumerateFiles()
                 .Where(f => IsImageFile(f.FullName))

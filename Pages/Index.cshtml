@@ -8,6 +8,10 @@
 
 <form id="admin" if-authorized method="post" action="~/album/new/create/">
     <input type="text" name="name" id="name" aria-label="Album name" placeholder="Album name" required />
+    <input type="text" name="description" id="description" aria-label="Album description" placeholder="Album description" />
+    <input type="text" name="visited" id="visited" aria-label="Date of visit" placeholder="Date of visit" />
+    <input type="text" name="latitude" id="latitude" aria-label="Album latitude" placeholder="Album latitude" />
+    <input type="text" name="longitude" id="longitude" aria-label="Album longitude" placeholder="Album longitude" />
     <input type="submit" id="newalbum" data-progress="Creating..." value="New album">
 </form>
 
