@@ -16,7 +16,7 @@ namespace glaa_trips.TagHelpers
 
             if (Model.Previous != null)
             {
-                output.Content.AppendHtml($"<a href=\"{Model.Previous.Link}\" rel=\"prev\" title=\"{Model.Previous.Name}\">&lt; Prev</a>");
+                output.Content.AppendHtml($"<a href=\"{Model.Previous.Link}\" rel=\"prev\" title=\"{Model.Previous.Id}\">&lt; Prev</a>");
             }
             else
             {
@@ -27,7 +27,7 @@ namespace glaa_trips.TagHelpers
 
             if (Model.Next != null)
             {
-                output.Content.AppendHtml($"<a href=\"{Model.Next.Link}\" rel=\"next\" title=\"{Model.Next.Name}\">Next &gt;</a>");
+                output.Content.AppendHtml($"<a href=\"{Model.Next.Link}\" rel=\"next\" title=\"{Model.Next.Id}\">Next &gt;</a>");
             }
             else
             {

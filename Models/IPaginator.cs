@@ -2,7 +2,7 @@
 {
     public interface IPaginator
     {
-        string Name { get; }
+        string Id { get; }
 
         string Link { get; }
 

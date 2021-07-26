@@ -1,8 +1,8 @@
 @page "{name}/{handler?}"
 @model AlbumsModel
 @{
-    ViewData["Title"] = Model.Album.Name;
-    ViewData["Description"] = $"The photo album \"{Model.Album.Name}\" containing {Model.Album.Photos.Count} photos including {string.Join(", ", Model.Album.Photos.Take(5))}";
+    ViewData["Title"] = Model.Album.DisplayName;
+    ViewData["Description"] = $"The photo album \"{Model.Album.DisplayName}\" containing {Model.Album.Photos.Count} photos including {string.Join(", ", Model.Album.Photos.Take(5))}";
     ViewData["Image"] = Request.Scheme + "://" + Request.Host + Model.Album.CoverPhoto?.GetThumbnailLink((int)ImageType.Full, out int h);
 }
 
@@ -10,6 +10,15 @@
     <form method="post" enctype="multipart/form-data">
         <input type="file" id="files" aria-label="Upload photo" name="files" required multiple accept="image/*" />
         <input type="submit" asp-page-handler="upload" data-progress="Uploading..." id="btnfiles" value="Upload photos" />
+    </form>
+
+    <form method="post" enctype="multipart/form-data">
+        <input type="text" name="name" id="name" aria-label="Album name" placeholder="Album name" required value="@Model.Album.DisplayName" />
+        <input type="text" name="description" id="description" aria-label="Album description" placeholder="Album description" value="@Model.Album.Description" />
+        <input type="text" name="visited" id="visited" aria-label="Date of visit" placeholder="Date of visit" value="@Model.Album.Visited" />
+        <input type="text" name="latitude" id="latitude" aria-label="Album latitude" placeholder="Album latitude" value="@Model.Album.Latitude" />
+        <input type="text" name="longitude" id="longitude" aria-label="Album longitude" placeholder="Album longitude" value="@Model.Album.Longitude" />
+        <input type="submit" asp-page-handler="edit" data-progress="Editing album..." id="btnEdit" value="Edit Album" />
     </form>
 
     <form method="post" class="delete">
@@ -20,7 +29,7 @@
 <div class="title" itemscope itemtype="http://schema.org/ListItem" itemprop="itemListElement">
     <paging model="@Model.Album" />
     <h2 itemscope itemtype="http://schema.org/Thing" itemprop="item">
-        <span itemprop="name">@Model.Album.Name</span>
+        <span itemprop="name">@Model.Album.DisplayName</span>
     </h2>
     <h4>@Model.Album.Description</h4>
     <h4>@Model.Album.Visited</h4>

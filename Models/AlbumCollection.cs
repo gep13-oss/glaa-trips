@@ -47,7 +47,7 @@ namespace glaa_trips.Models
 
         public void Sort()
         {
-            Albums = Albums.OrderBy(a => a.Name).ToList();
+            Albums = Albums.OrderBy(a => a.Id).ToList();
         }
 
         private Album GetAlbum(string albumPath)

@@ -17,7 +17,7 @@ namespace glaa_trips.Models
             AbsolutePath = file.FullName;
         }
 
-        public string Name
+        public string Id
         {
             get
             {
@@ -29,7 +29,7 @@ namespace glaa_trips.Models
         {
             get
             {
-                return Path.GetFileNameWithoutExtension(Name);
+                return Path.GetFileNameWithoutExtension(Id);
             }
         }
 
@@ -87,7 +87,7 @@ namespace glaa_trips.Models
         {
             get
             {
-                return $"/albums/{Album.UrlName}/{Name.Replace(" ", "%20").ToLowerInvariant()}";
+                return $"/albums/{Album.UrlName}/{Id.Replace(" ", "%20").ToLowerInvariant()}";
             }
         }
 
@@ -101,7 +101,7 @@ namespace glaa_trips.Models
 
         public string GetThumbnailLink(int width, out int height)
         {
-            string ext = Path.GetExtension(Name);
+            string ext = Path.GetExtension(Id);
 
             if (_heights.TryGetValue(width, out height))
             {

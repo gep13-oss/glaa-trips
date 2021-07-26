@@ -12,6 +12,7 @@ using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Slugify;
+using System.Text.RegularExpressions;
 
 namespace glaa_trips.Pages
 {
@@ -32,7 +33,7 @@ namespace glaa_trips.Pages
 
         public IActionResult OnGet(string name)
         {
-            Album = _ac.Albums.FirstOrDefault(a => a.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            Album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(name, StringComparison.OrdinalIgnoreCase));
 
             if (Album == null)
             {
@@ -44,19 +45,39 @@ namespace glaa_trips.Pages
 
         [Authorize]
         [ValidateAntiForgeryToken]
-        public IActionResult OnPostDelete(string name)
+        public async Task<IActionResult> OnPostDelete(string name)
         {
             string path = Path.Combine(_environment.WebRootPath, "albums", name);
 
             if (Directory.Exists(path))
-                Directory.Delete(path, true);
-
-            var album = _ac.Albums.FirstOrDefault(a => a.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-
-            if (album != null)
             {
-                _ac.Albums.Remove(album);
+                Directory.Delete(path, true);
             }
+
+            var existingAlbum = _ac.Albums.FirstOrDefault(a => a.Id.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+            if (existingAlbum != null)
+            {
+                _ac.Albums.Remove(existingAlbum);
+            }
+
+            var markers = new List<Marker>();
+            string markerJsonPath = Path.Combine(_environment.WebRootPath, "albums", "markers.json");
+            
+            foreach (var album in _ac.Albums)
+            {
+                var marker = new Marker();
+                marker.Lat = album.Latitude;
+                marker.Long = album.Longitude;
+                marker.Slug = album.Id;
+
+                markers.Add(marker);
+            }
+
+            using (var createStream = System.IO.File.Create(markerJsonPath))
+            {
+                await JsonSerializer.SerializeAsync<List<Marker>>(createStream, markers);
+            };
 
             return new RedirectResult("~/");
         }
@@ -86,6 +107,7 @@ namespace glaa_trips.Pages
 
             var metadataFileName = Path.Combine(path, "data.json");
             var albumMetaData = new AlbumMetaData();
+            albumMetaData.DisplayName = name;
             albumMetaData.Description = description;
             albumMetaData.Visited = DateTime.Parse(visited);
             albumMetaData.Latitude = latitude;
@@ -117,14 +139,52 @@ namespace glaa_trips.Pages
         }
 
         [Authorize]
+        public async Task<IActionResult> OnPostEdit(string name, string description, string visited, double latitude, double longitude)
+        {
+            var regex = new Regex("\\/Album\\/(.*)\\/edit");
+            var slugName = string.Empty;
+            var match = regex.Match(HttpContext.Request.Path);
+            if (match.Success)
+            {
+                slugName = match.Groups[1].Value;
+            }
+
+            string path = Path.Combine(_environment.WebRootPath, "albums", slugName);
+
+            var metadataFileName = Path.Combine(path, "data.json");
+            var albumMetaData = new AlbumMetaData();
+            albumMetaData.DisplayName = name;
+            albumMetaData.Description = description;
+            albumMetaData.Visited = DateTime.Parse(visited);
+            albumMetaData.Latitude = latitude;
+            albumMetaData.Longitude = longitude;
+
+            using (var createStream = System.IO.File.Create(metadataFileName))
+            {
+                await JsonSerializer.SerializeAsync<AlbumMetaData>(createStream, albumMetaData);
+            };
+
+            var existingAlbum = _ac.Albums.FirstOrDefault(a => a.Id.Equals(slugName, StringComparison.OrdinalIgnoreCase));
+            var updatedAlbum = new Album(slugName, _ac, albumMetaData);
+
+            if (existingAlbum != null)
+            {
+                _ac.Albums.Remove(existingAlbum);
+                _ac.Albums.Insert(0, updatedAlbum);
+            }
+
+            return new RedirectResult($"~/album/{slugName}/");
+        }
+
+        [Authorize]
         public async Task<IActionResult> OnPostUpload(string name, ICollection<IFormFile> files)
         {
-            var album = _ac.Albums.FirstOrDefault(a => a.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(name, StringComparison.OrdinalIgnoreCase));
 
             foreach (var file in files.Where(f => _ac.IsImageFile(f.FileName)))
             {
                 string fileName = Path.GetFileName(file.FileName);
-                string filePath = Path.Combine(_environment.WebRootPath, "albums", album.Name, Path.GetFileName(fileName));
+                string filePath = Path.Combine(_environment.WebRootPath, "albums", album.Id, Path.GetFileName(fileName));
 
                 if (System.IO.File.Exists(filePath))
                 {

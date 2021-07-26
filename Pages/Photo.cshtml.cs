@@ -24,13 +24,13 @@ namespace glaa_trips.Pages
 
         public void OnGet(string albumName, string photoName)
         {
-            var album = _ac.Albums.FirstOrDefault(a => a.Name.Equals(albumName, StringComparison.OrdinalIgnoreCase));
+            var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(albumName, StringComparison.OrdinalIgnoreCase));
             Photo = album.Photos.FirstOrDefault(p => p.DisplayName.Equals(photoName, StringComparison.OrdinalIgnoreCase));
         }
 
         public IActionResult OnPostRename(string albumName, string photoName)
         {
-            var album = _ac.Albums.FirstOrDefault(a => a.Name.Equals(albumName, StringComparison.OrdinalIgnoreCase));
+            var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(albumName, StringComparison.OrdinalIgnoreCase));
             Photo = album.Photos.FirstOrDefault(p => p.DisplayName.Equals(photoName, StringComparison.OrdinalIgnoreCase));
             string name = Request.Form["name"] + Path.GetExtension(Photo.AbsolutePath);
 
@@ -61,7 +61,7 @@ namespace glaa_trips.Pages
 
         public IActionResult OnPostDelete(string albumName, string photoName)
         {
-            var album = _ac.Albums.FirstOrDefault(a => a.Name.Equals(albumName, StringComparison.OrdinalIgnoreCase));
+            var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(albumName, StringComparison.OrdinalIgnoreCase));
             Photo = album.Photos.FirstOrDefault(p => p.DisplayName.Equals(photoName, StringComparison.OrdinalIgnoreCase));
             album.Photos.Remove(Photo);
 

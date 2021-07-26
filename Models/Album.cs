@@ -18,11 +18,12 @@ namespace glaa_trips.Models
         {
             _ac = ac;
             AbsolutePath = absolutePath;
-            Name = new DirectoryInfo(AbsolutePath).Name;
+            Id = new DirectoryInfo(AbsolutePath).Name;
             Photos = new List<Photo>();
 
             if (metaData != null)
             {
+                DisplayName = metaData.DisplayName;
                 Description = metaData.Description;
                 Visited = metaData.Visited;
                 Latitude = metaData.Latitude;
@@ -30,7 +31,9 @@ namespace glaa_trips.Models
             }
         }
 
-        public string Name { get; }
+        public string Id { get; }
+
+        public string DisplayName { get; }
 
         public string Description { get; }
 
@@ -44,7 +47,7 @@ namespace glaa_trips.Models
         {
             get
             {
-                return Name.Replace(" ", "%20").ToLowerInvariant();
+                return Id.Replace(" ", "%20").ToLowerInvariant();
             }
         }
 
