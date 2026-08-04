@@ -1,13 +1,13 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using glaa_trips.Models;
+using GlaaTrips.Models;
 using System;
 using System.IO;
 using System.Linq;
 using System.Net;
 
-namespace glaa_trips.Pages
+namespace GlaaTrips.Pages
 {
     public class PhotoModel : PageModel
     {

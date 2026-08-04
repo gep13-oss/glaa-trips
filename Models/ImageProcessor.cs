@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 
-namespace glaa_trips.Models
+namespace GlaaTrips.Models
 {
     public class ImageProcessor
     {

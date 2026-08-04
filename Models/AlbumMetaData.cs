@@ -1,5 +1,7 @@
 using System;
 
+namespace GlaaTrips.Models;
+
 public class AlbumMetaData
 {
     public string DisplayName { get; set; }

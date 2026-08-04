@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 
-namespace glaa_trips.Models
+namespace GlaaTrips.Models
 {
     public class AlbumCollection
     {

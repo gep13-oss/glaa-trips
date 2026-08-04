@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using glaa_trips.Models;
+using GlaaTrips.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 using Slugify;
 using System.Text.RegularExpressions;
 
-namespace glaa_trips.Pages
+namespace GlaaTrips.Pages
 {
     public class AlbumsModel : PageModel
     {

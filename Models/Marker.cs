@@ -1,3 +1,5 @@
+namespace GlaaTrips.Models;
+
 public class Marker
 {
     public double Lat { get; set; }

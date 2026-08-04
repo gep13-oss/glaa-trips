@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 
-namespace glaa_trips.TagHelpers
+namespace GlaaTrips.TagHelpers
 {
     [HtmlTargetElement("*", Attributes = "if-authorized")]
     public class AuthorizeTagHelper : TagHelper

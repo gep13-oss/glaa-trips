@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace glaa_trips.Models
+namespace GlaaTrips.Models
 {
     public class Photo : IPaginator
     {

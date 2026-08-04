@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace glaa_trips.Models
+namespace GlaaTrips.Models
 {
     public class Album : IPaginator
     {

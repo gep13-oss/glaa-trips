@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Razor.TagHelpers;
-using glaa_trips.Models;
+using GlaaTrips.Models;
 
-namespace glaa_trips.TagHelpers
+namespace GlaaTrips.TagHelpers
 {
     public class PagingTagHelper : TagHelper
     {

@@ -1,4 +1,4 @@
-﻿namespace glaa_trips.Models
+﻿namespace GlaaTrips.Models
 {
     public interface IPaginator
     {

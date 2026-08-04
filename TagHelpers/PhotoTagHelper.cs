@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Razor.TagHelpers;
-using glaa_trips.Models;
+using GlaaTrips.Models;
 
-namespace glaa_trips.TagHelpers
+namespace GlaaTrips.TagHelpers
 {
     [HtmlTargetElement("img", Attributes = "photo, type")]
     public class PhotoTagHelper : TagHelper

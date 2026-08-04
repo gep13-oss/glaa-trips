@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
-using glaa_trips.Models;
+using GlaaTrips.Models;
 using System;
 
 var builder = WebApplication.CreateBuilder(args);

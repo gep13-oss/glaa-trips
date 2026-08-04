@@ -9,7 +9,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace glaa_trips.Pages
+namespace GlaaTrips.Pages
 {
     public class LoginModel : PageModel
     {
