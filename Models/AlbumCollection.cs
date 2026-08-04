@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using Microsoft.AspNetCore.Hosting;
 
 namespace GlaaTrips.Models
 {

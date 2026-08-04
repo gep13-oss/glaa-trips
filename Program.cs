@@ -1,3 +1,5 @@
+using System;
+using GlaaTrips.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -6,8 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
-using GlaaTrips.Models;
-using System;
 
 var builder = WebApplication.CreateBuilder(args);
 

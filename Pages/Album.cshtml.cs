@@ -1,18 +1,18 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using GlaaTrips.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Slugify;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using GlaaTrips.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Slugify;
 
 namespace GlaaTrips.Pages
 {
@@ -63,7 +63,7 @@ namespace GlaaTrips.Pages
 
             var markers = new List<Marker>();
             string markerJsonPath = Path.Combine(_environment.WebRootPath, "albums", "markers.json");
-            
+
             foreach (var album in _ac.Albums)
             {
                 var marker = new Marker();
@@ -77,7 +77,7 @@ namespace GlaaTrips.Pages
             using (var createStream = System.IO.File.Create(markerJsonPath))
             {
                 await JsonSerializer.SerializeAsync<List<Marker>>(createStream, markers);
-            };
+            }
 
             return new RedirectResult("~/");
         }
@@ -86,7 +86,7 @@ namespace GlaaTrips.Pages
         public async Task<IActionResult> OnPostCreate(string name, string description, string visited, double latitude, double longitude)
         {
             string markerJsonPath = Path.Combine(_environment.WebRootPath, "albums", "markers.json");
-            
+
             SlugHelper helper = new SlugHelper();
             string slugName = helper.GenerateSlug(name);
 
@@ -123,15 +123,15 @@ namespace GlaaTrips.Pages
             using (var createStream = System.IO.File.Create(metadataFileName))
             {
                 await JsonSerializer.SerializeAsync<AlbumMetaData>(createStream, albumMetaData);
-            };
+            }
 
             using (var createStream = System.IO.File.Create(markerJsonPath))
             {
                 await JsonSerializer.SerializeAsync<List<Marker>>(createStream, markers);
-            };
+            }
 
             var album = new Album(path, _ac, albumMetaData);
-                  
+
             _ac.Albums.Insert(0, album);
             _ac.Sort();
 
@@ -162,7 +162,7 @@ namespace GlaaTrips.Pages
             using (var createStream = System.IO.File.Create(metadataFileName))
             {
                 await JsonSerializer.SerializeAsync<AlbumMetaData>(createStream, albumMetaData);
-            };
+            }
 
             var existingAlbum = _ac.Albums.FirstOrDefault(a => a.Id.Equals(slugName, StringComparison.OrdinalIgnoreCase));
             var updatedAlbum = new Album(slugName, _ac, albumMetaData);

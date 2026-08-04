@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Razor.TagHelpers;
-using GlaaTrips.Models;
+﻿using GlaaTrips.Models;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 
 namespace GlaaTrips.TagHelpers
 {
