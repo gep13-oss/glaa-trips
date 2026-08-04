@@ -1,0 +1,32 @@
+# Normalise line endings: let Git decide text vs binary, store text as LF.
+* text=auto
+
+# Source & config — LF in the repo.
+*.cs        text eol=lf diff=csharp
+*.csx       text eol=lf
+*.cshtml    text eol=lf
+*.razor     text eol=lf
+*.css       text eol=lf
+*.js        text eol=lf
+*.json      text eol=lf
+*.config    text eol=lf
+*.md        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.editorconfig text eol=lf
+
+# Windows-native tooling — keep CRLF.
+*.sln       text eol=crlf
+*.ps1       text eol=crlf
+*.cmd       text eol=crlf
+*.bat       text eol=crlf
+
+# Binary assets — never normalise.
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.webp      binary
+*.woff      binary
+*.woff2     binary
