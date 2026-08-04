@@ -1,0 +1,195 @@
+html {
+    position: relative;
+    min-height: 100%;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+}
+
+body {
+    margin: 0 auto 70px auto;
+    padding: 0;
+    color: #444;
+    background-color: #fff;
+    font: 16px/1.4 "trebuchet ms", palatino, tahoma, sans-serif;
+}
+
+.container {
+    display: block;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+header {
+    margin: 0 0 20px 0;
+    padding: 0;
+    background-color: #444;
+}
+
+header h1 {
+    margin: 0;
+    font-weight: normal;
+    line-height: 60px;
+}
+
+header h1 a {
+    color: #fff;
+    text-decoration: none;
+}
+
+a {
+    color: #0e5494;
+}
+
+img {
+    border: none;
+}
+
+.title {
+    line-height: 2em;
+    margin-bottom: .5em;
+}
+
+.title h2 {
+    margin: 0;
+    max-width: 70%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.title > nav {
+    float: right;
+}
+
+.pic img {
+    display: block;
+    width: 100%;
+    opacity: 0;
+    -moz-transition: opacity 500ms ease-in-out;
+    -o-transition: opacity 500ms ease-in-out;
+    -webkit-transition: opacity 500ms ease-in-out;
+    transition: opacity 500ms ease-in-out;
+    will-change: opacity;
+}
+
+.pic img.loaded {
+    opacity: 1;
+}
+
+.pic a {
+    background: #f1f1f1;
+    position: relative;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.pic a:after {
+    content: attr(data-text);
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    font-size: .9em;
+    line-height: 1.7;
+    text-indent: 5px;
+    background: rgba(0, 0, 0, .60);
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    -moz-transition: opacity 300ms ease-in-out;
+    -o-transition: opacity 300ms ease-in-out;
+    -webkit-transition: opacity 300ms ease-in-out;
+    transition: opacity 300ms ease-in-out;
+}
+
+.pic a:hover:after,
+.pic a:focus:after {
+    opacity: 1;
+}
+
+.albumlist {
+    display: flex;
+    flex-flow: row wrap;
+    margin: -2px;
+}
+
+.albumlist > a {
+    flex-basis: 15%;
+    flex-grow: 1;
+    min-width: 196px;
+    margin: 1px;
+    width: 100%;
+}
+
+.albumlist > a:after {
+    opacity: 1;
+}
+
+.albumlist img {
+    height: 175px;
+}
+
+.photolist {
+    margin-right: -2px;
+    margin-bottom: 20px;
+    -ms-column-gap: 2px;
+    -moz-column-gap: 2px;
+    -webkit-column-gap: 2px;
+    column-gap: 2px;
+    -ms-column-width: 190px;
+    -moz-column-width: 190px;
+    -webkit-column-width: 190px;
+    column-width: 190px;
+}
+
+.photo img {
+    margin-bottom: 8px;
+}
+
+.photo .download {
+    float: right;
+}
+
+.socialsharing {
+    margin-top: 1em;
+}
+
+.socialsharing a {
+    display: inline-block;
+    margin-right: .6em;
+}
+
+.socialsharing svg {
+    width: 24px;
+    height: 24px;
+}
+
+.socialsharing svg path {
+    fill: gray;
+}
+
+footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    text-align: center;
+}
+
+footer a:last-child {
+    float: right;
+}
+
+@media (max-width: 960px) {
+    .photo img {
+        height: auto;
+    }
+}
+
+#map {
+    height: 400px;
+    width: 100%;
+}

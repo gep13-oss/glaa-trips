@@ -12,9 +12,9 @@ namespace glaa_trips.Pages
     public class PhotoModel : PageModel
     {
         private AlbumCollection _ac;
-        private IHostingEnvironment _environment;
+        private IWebHostEnvironment _environment;
 
-        public PhotoModel(AlbumCollection ac, IHostingEnvironment environment)
+        public PhotoModel(AlbumCollection ac, IWebHostEnvironment environment)
         {
             _ac = ac;
             _environment = environment;

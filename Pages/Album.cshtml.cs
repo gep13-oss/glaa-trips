@@ -19,10 +19,10 @@ namespace glaa_trips.Pages
     public class AlbumsModel : PageModel
     {
         private AlbumCollection _ac;
-        private IHostingEnvironment _environment;
+        private IWebHostEnvironment _environment;
         private ImageProcessor _processor;
 
-        public AlbumsModel(AlbumCollection ac, IHostingEnvironment environment, ImageProcessor processor)
+        public AlbumsModel(AlbumCollection ac, IWebHostEnvironment environment, ImageProcessor processor)
         {
             _ac = ac;
             _environment = environment;

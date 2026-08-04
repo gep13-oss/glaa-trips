@@ -9,10 +9,10 @@ namespace glaa_trips.Models
 {
     public class AlbumCollection
     {
-        private IHostingEnvironment _environment;
+        private IWebHostEnvironment _environment;
         private static readonly string[] _extensions = { ".jpg", ".jpeg", ".gif", ".png" };
 
-        public AlbumCollection(IHostingEnvironment environment)
+        public AlbumCollection(IWebHostEnvironment environment)
         {
             _environment = environment;
             Albums = new List<Album>();

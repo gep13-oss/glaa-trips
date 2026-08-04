@@ -6,7 +6,7 @@
     <meta name="description" content="@ViewData["Description"]" />
     <meta name="keywords" content="@ViewData["Title"], photo, picture, gallery, images" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="/css/site.scss" inline />
+    <link rel="stylesheet" href="/css/site.css" />
     @RenderSection("head", required: false)
     <meta name="application-name" content="@ViewData["Title"]" />
     <meta property="og:type" content="website" />
@@ -38,7 +38,7 @@
         </main>
     </div>
 
-    <script src="/js/site.js" inline></script>
+    <script src="/js/site.js"></script>
     @RenderSection("scripts", required: false)
 
     <meta itemprop="description" content="@ViewData["Description"]" />
