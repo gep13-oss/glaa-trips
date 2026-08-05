@@ -29,8 +29,16 @@ builder.Services.AddAuthentication(options =>
     options.ReturnUrlParameter = "returnUrl";
 });
 
-// Reads ApplicationInsights:ConnectionString from configuration when present.
-builder.Services.AddApplicationInsightsTelemetry();
+// Enable telemetry only when a connection string is configured (via
+// user-secrets / environment). Registering it with no connection string makes
+// the Azure Monitor exporter throw at startup, so the app must opt in.
+var aiConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"]
+    ?? Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
+
+if (!string.IsNullOrWhiteSpace(aiConnectionString))
+{
+    builder.Services.AddApplicationInsightsTelemetry();
+}
 
 var app = builder.Build();
 
