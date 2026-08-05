@@ -48,7 +48,12 @@ namespace GlaaTrips.Pages
                 return challenge;
             }
 
-            string path = Path.Combine(_environment.WebRootPath, "albums", name);
+            string albumsRoot = Path.Combine(_environment.WebRootPath, "albums");
+
+            if (!SafePathHelper.TryCombineWithin(albumsRoot, name, out string path))
+            {
+                return BadRequest();
+            }
 
             if (Directory.Exists(path))
             {
@@ -94,6 +99,14 @@ namespace GlaaTrips.Pages
 
             SlugHelper helper = new SlugHelper();
             string slugName = helper.GenerateSlug(name);
+
+            // The slug is normally already separator-free, but an all-punctuation
+            // title can slug to an empty string, which would resolve to the albums
+            // root itself. Reject anything that is not a safe single segment.
+            if (!SafePathHelper.IsValidSegment(slugName))
+            {
+                return BadRequest();
+            }
 
             List<Marker> markers = null;
 
@@ -156,6 +169,11 @@ namespace GlaaTrips.Pages
             if (match.Success)
             {
                 slugName = match.Groups[1].Value;
+            }
+
+            if (!SafePathHelper.IsValidSegment(slugName))
+            {
+                return BadRequest();
             }
 
             string path = Path.Combine(_environment.WebRootPath, "albums", slugName);

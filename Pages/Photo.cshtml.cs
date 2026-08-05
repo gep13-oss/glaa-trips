@@ -34,9 +34,16 @@ namespace GlaaTrips.Pages
                 return challenge;
             }
 
+            string requestedName = Request.Form["name"];
+
+            if (!SafePathHelper.IsValidSegment(requestedName))
+            {
+                return BadRequest();
+            }
+
             var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(albumName, StringComparison.OrdinalIgnoreCase));
             Photo = album.Photos.FirstOrDefault(p => p.DisplayName.Equals(photoName, StringComparison.OrdinalIgnoreCase));
-            string name = Request.Form["name"] + Path.GetExtension(Photo.AbsolutePath);
+            string name = requestedName + Path.GetExtension(Photo.AbsolutePath);
 
             var newPhotoPath = new FileInfo(Path.Combine(album.AbsolutePath, name));
             int index = album.Photos.IndexOf(Photo);
