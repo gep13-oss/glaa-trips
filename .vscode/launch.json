@@ -9,7 +9,7 @@
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "build",
-			"program": "${workspaceFolder}/bin/Debug/netcoreapp2.1/glaa-trips.dll",
+			"program": "${workspaceFolder}/bin/Debug/net10.0/GlaaTrips.dll",
 			"args": [],
 			"cwd": "${workspaceFolder}",
 			"stopAtEntry": false,
