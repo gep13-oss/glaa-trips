@@ -8,11 +8,13 @@
 //   Clean         - remove build outputs (bin/obj) and dotnet-clean the solution
 //   VerifyFormat  - fail if dotnet-format would change anything (formatting gate)
 //   Build         - verify formatting, then build the solution
-//   Test          - build, install the Playwright browser, run the Playwright suite
+//   UnitTest      - build, then run the fast unit tests (no server, no browser)
+//   Test          - unit tests + install the Playwright browser + run the UI suite
 //   Format        - apply dotnet-format (whitespace + style + analyzers)
 //
 // Usage:
 //   dotnet cake.cs --target=Build
+//   dotnet cake.cs --target=UnitTest
 //   dotnet cake.cs --target=Test
 //   dotnet cake.cs --target=Format
 //
@@ -22,7 +24,8 @@ var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 
 var solution = "./GlaaTrips.sln";
-var testProject = "./tests/GlaaTrips.Tests/GlaaTrips.Tests.csproj";
+var unitTestProject = "./tests/GlaaTrips.UnitTests/GlaaTrips.UnitTests.csproj";
+var uiTestProject = "./tests/GlaaTrips.UITests/GlaaTrips.UITests.csproj";
 var testTfm = "net10.0";
 
 Task("Clean")
@@ -44,7 +47,7 @@ Task("Install-Playwright")
     .IsDependentOn("Build")
     .Does(() =>
     {
-        var script = $"./tests/GlaaTrips.Tests/bin/{configuration}/{testTfm}/playwright.ps1";
+        var script = $"./tests/GlaaTrips.UITests/bin/{configuration}/{testTfm}/playwright.ps1";
         if (!FileExists(script))
         {
             throw new Exception(
@@ -63,11 +66,23 @@ Task("Install-Playwright")
         }
     });
 
+Task("UnitTest")
+    .IsDependentOn("Build")
+    .Does(() =>
+    {
+        DotNetTest(unitTestProject, new DotNetTestSettings
+        {
+            Configuration = configuration,
+            NoBuild = true,
+        });
+    });
+
 Task("Test")
+    .IsDependentOn("UnitTest")
     .IsDependentOn("Install-Playwright")
     .Does(() =>
     {
-        DotNetTest(testProject, new DotNetTestSettings
+        DotNetTest(uiTestProject, new DotNetTestSettings
         {
             Configuration = configuration,
             NoBuild = true,
@@ -88,6 +103,6 @@ Task("VerifyFormat")
 
 Task("Default")
     .IsDependentOn("Test")
-    .Description("Default target - runs the Playwright test suite.");
+    .Description("Default target - runs the unit tests and the Playwright UI suite.");
 
 RunTarget(target);

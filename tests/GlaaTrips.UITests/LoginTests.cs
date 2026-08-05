@@ -1,6 +1,6 @@
 using Microsoft.Playwright.NUnit;
 
-namespace GlaaTrips.Tests
+namespace GlaaTrips.UITests
 {
     /// <summary>
     /// Baseline coverage for the admin sign-in flow. Note: this proves the login

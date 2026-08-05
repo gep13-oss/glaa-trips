@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
 
-namespace GlaaTrips.Tests
+namespace GlaaTrips.UITests
 {
     /// <summary>
     /// Baseline coverage for the public (anonymous) site: viewing albums and the

@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace GlaaTrips.Tests
+namespace GlaaTrips.UITests
 {
     /// <summary>
     /// Boots the migrated glaa-trips app once for the whole test run and tears it
