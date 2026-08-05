@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
+using GlaaTrips.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
 
@@ -66,17 +65,7 @@ namespace GlaaTrips.Pages
 
         private bool VerifyHashedPassword(string password)
         {
-            byte[] saltBytes = Encoding.UTF8.GetBytes(_config["user:salt"]);
-
-            byte[] hashBytes = KeyDerivation.Pbkdf2(
-                password: password,
-                salt: saltBytes,
-                prf: KeyDerivationPrf.HMACSHA1,
-                iterationCount: 1000,
-                numBytesRequested: 256 / 8);
-
-            string hashText = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
-            return hashText == _config["user:password"];
+            return PasswordHasher.Verify(password, _config["user:salt"], _config["user:password"]);
         }
     }
 }

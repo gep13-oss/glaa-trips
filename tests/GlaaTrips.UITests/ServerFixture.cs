@@ -130,13 +130,15 @@ namespace GlaaTrips.UITests
             File.WriteAllText(Path.Combine(albums, "markers.json"), JsonSerializer.Serialize(markers));
         }
 
-        // Mirrors the app's LoginModel.VerifyHashedPassword: PBKDF2/HMAC-SHA1,
-        // 1000 iterations, 256-bit key, salt as UTF-8 bytes, upper-case hex.
+        // Mirrors the app's GlaaTrips.Models.PasswordHasher: PBKDF2/HMAC-SHA256,
+        // 600,000 iterations, 256-bit key, salt as UTF-8 bytes, upper-case hex.
+        // This project is black-box and cannot reference the app assembly, so the
+        // derivation is duplicated here — keep it in sync with PasswordHasher.
         private static string HashPassword(string password, string salt)
         {
             var saltBytes = Encoding.UTF8.GetBytes(salt);
-            using var pbkdf2 = new Rfc2898DeriveBytes(password, saltBytes, 1000, HashAlgorithmName.SHA1);
-            return Convert.ToHexString(pbkdf2.GetBytes(256 / 8));
+            var hash = Rfc2898DeriveBytes.Pbkdf2(password, saltBytes, 600_000, HashAlgorithmName.SHA256, 256 / 8);
+            return Convert.ToHexString(hash);
         }
 
         private static int GetFreePort()
