@@ -9,7 +9,7 @@ namespace GlaaTrips.Models
 {
     public class AlbumCollection
     {
-        private IWebHostEnvironment _environment;
+        private readonly IWebHostEnvironment _environment;
         private static readonly string[] _extensions = { ".jpg", ".jpeg", ".gif", ".png" };
 
         public AlbumCollection(IWebHostEnvironment environment)
@@ -32,7 +32,9 @@ namespace GlaaTrips.Models
         {
             var root = Path.Combine(contentPath, "albums");
             if (!Directory.Exists(root))
+            {
                 return;
+            }
 
             var albumPaths = Directory.EnumerateDirectories(root);
 
@@ -68,7 +70,8 @@ namespace GlaaTrips.Models
             var directory = new DirectoryInfo(albumPath);
             var photos = directory.EnumerateFiles()
                 .Where(f => IsImageFile(f.FullName))
-                //.OrderByDescending(f => f.LastWriteTime)
+
+                // .OrderByDescending(f => f.LastWriteTime)
                 .Select(a => new Photo(album, a));
 
             album.Photos.AddRange(photos);

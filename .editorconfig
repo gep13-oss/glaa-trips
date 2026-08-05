@@ -387,7 +387,58 @@ dotnet_naming_style.camelcase.word_separator =
 dotnet_naming_style.camelcase.capitalization = camel_case
 
 dotnet_naming_style.s_camelcase.required_prefix = s_
-dotnet_naming_style.s_camelcase.required_suffix = 
-dotnet_naming_style.s_camelcase.word_separator = 
+dotnet_naming_style.s_camelcase.required_suffix =
+dotnet_naming_style.s_camelcase.word_separator =
 dotnet_naming_style.s_camelcase.capitalization = camel_case
+
+#### StyleCop.Analyzers rule triage ####
+# StyleCop is a dev-only analyzer (see Directory.Build.props). Its defaults
+# bury genuinely useful diagnostics under hundreds of style-preference
+# warnings, so we silence the rules that conflict with this repo's own
+# conventions (set above) or are false positives, and keep the ones that are
+# both useful AND auto-fixable by `dotnet format`. Anything not listed keeps
+# its StyleCop default severity (warning).
+
+# --- OFF: conflict with this repo's established conventions ---
+# 'this.' qualification — repo uses dotnet_style_qualification_for_* = false.
+dotnet_diagnostic.SA1101.severity = none
+# Field naming — repo enforces _camelCase private fields (naming rules above).
+dotnet_diagnostic.SA1309.severity = none
+
+# --- OFF: unwanted / not applicable to this project ---
+# File header — no copyright headers (file_header_template = unset above).
+dotnet_diagnostic.SA1633.severity = none
+# "XML comment analysis disabled" — only fires because doc generation is off.
+dotnet_diagnostic.SA0001.severity = none
+# Documentation rules — this app does not require XML doc comments on every
+# element. `dotnet format` forces doc analysis on (unlike the normal build),
+# so without this SA1600/1601/1602 fire on every undocumented member and
+# `VerifyFormat` can never pass. These are the members-must-be-documented
+# rules that fire when no doc comment is present.
+dotnet_diagnostic.SA1600.severity = none  # elements should be documented
+dotnet_diagnostic.SA1601.severity = none  # partial elements should be documented
+dotnet_diagnostic.SA1602.severity = none  # enumeration items should be documented
+# Filename must match first type — false positive on Razor Page code-behind
+# (Album.cshtml.cs -> AlbumModel, etc.).
+dotnet_diagnostic.SA1649.severity = none
+
+# --- OFF: rigid member-ordering, no auto-fixer, low value for this app ---
+# (Revisit if a house ordering convention is ever wanted.)
+dotnet_diagnostic.SA1201.severity = none
+dotnet_diagnostic.SA1202.severity = none
+dotnet_diagnostic.SA1204.severity = none
+
+# --- KEEP (warning): useful and auto-fixable by `dotnet format` ---
+dotnet_diagnostic.SA1005.severity = warning  # comment should start with a space
+dotnet_diagnostic.SA1009.severity = warning  # closing paren spacing
+dotnet_diagnostic.SA1111.severity = warning  # closing paren on last-parameter line
+dotnet_diagnostic.SA1122.severity = warning  # use string.Empty
+dotnet_diagnostic.SA1400.severity = warning  # declare access modifier explicitly
+dotnet_diagnostic.SA1413.severity = warning  # trailing comma in multi-line initializers
+dotnet_diagnostic.SA1501.severity = warning  # statement should not be on a single line
+dotnet_diagnostic.SA1503.severity = warning  # braces should not be omitted
+dotnet_diagnostic.SA1508.severity = warning  # no blank line before closing brace
+dotnet_diagnostic.SA1513.severity = warning  # blank line after closing brace
+dotnet_diagnostic.SA1515.severity = warning  # blank line before single-line comment
+dotnet_diagnostic.SA1516.severity = warning  # elements separated by blank line
 

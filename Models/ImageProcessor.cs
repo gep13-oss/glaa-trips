@@ -6,7 +6,7 @@ namespace GlaaTrips.Models
 {
     public class ImageProcessor
     {
-        const int Quality = 75;
+        private const int Quality = 75;
 
         public void CreateThumbnails(Stream imageStream, string filePath)
         {

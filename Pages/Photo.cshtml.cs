@@ -11,8 +11,8 @@ namespace GlaaTrips.Pages
 {
     public class PhotoModel : PageModel
     {
-        private AlbumCollection _ac;
-        private IWebHostEnvironment _environment;
+        private readonly AlbumCollection _ac;
+        private readonly IWebHostEnvironment _environment;
 
         public PhotoModel(AlbumCollection ac, IWebHostEnvironment environment)
         {
@@ -56,7 +56,6 @@ namespace GlaaTrips.Pages
             Photo.Album.Sort();
 
             return new RedirectResult($"~/photo/{WebUtility.UrlEncode(albumName).Replace('+', ' ')}/{newPhoto.DisplayName}/");
-
         }
 
         public IActionResult OnPostDelete(string albumName, string photoName)

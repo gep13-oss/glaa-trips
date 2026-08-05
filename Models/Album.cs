@@ -7,7 +7,7 @@ namespace GlaaTrips.Models
 {
     public class Album : IPaginator
     {
-        private AlbumCollection _ac;
+        private readonly AlbumCollection _ac;
 
         public Album(string absolutePath, AlbumCollection ac)
             : this(absolutePath, ac, null)

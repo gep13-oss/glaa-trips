@@ -13,7 +13,7 @@ namespace GlaaTrips.Pages
 {
     public class LoginModel : PageModel
     {
-        private IConfiguration _config;
+        private readonly IConfiguration _config;
 
         public LoginModel(IConfiguration config)
         {
@@ -73,8 +73,7 @@ namespace GlaaTrips.Pages
                 salt: saltBytes,
                 prf: KeyDerivationPrf.HMACSHA1,
                 iterationCount: 1000,
-                numBytesRequested: 256 / 8
-            );
+                numBytesRequested: 256 / 8);
 
             string hashText = BitConverter.ToString(hashBytes).Replace("-", string.Empty);
             return hashText == _config["user:password"];

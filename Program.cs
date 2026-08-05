@@ -41,7 +41,7 @@ app.UseStaticFiles(new StaticFileOptions()
         var time = TimeSpan.FromDays(365);
         context.Context.Response.Headers[HeaderNames.CacheControl] = $"max-age={time.TotalSeconds.ToString()}";
         context.Context.Response.Headers[HeaderNames.Expires] = DateTime.UtcNow.Add(time).ToString("R");
-    }
+    },
 });
 
 if (app.Configuration.GetValue<bool>("forcessl"))

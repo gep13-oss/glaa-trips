@@ -21,7 +21,7 @@ namespace GlaaTrips.Tests
         private static Process? _app;
         private static string? _tempWebRoot;
 
-        public static string BaseUrl { get; private set; } = "";
+        public static string BaseUrl { get; private set; } = string.Empty;
 
         public const string TestUsername = "testuser";
         public const string TestPassword = "test-password-123";
@@ -72,6 +72,7 @@ namespace GlaaTrips.Tests
             psi.Environment["ASPNETCORE_ENVIRONMENT"] = "Production";
 
             _app = Process.Start(psi)!;
+
             // Drain stdout/stderr so a full pipe never blocks the app.
             _app.OutputDataReceived += (_, _) => { };
             _app.ErrorDataReceived += (_, _) => { };
@@ -87,17 +88,26 @@ namespace GlaaTrips.Tests
             try
             {
                 if (_app is { HasExited: false })
+                {
                     _app.Kill(entireProcessTree: true);
+                }
             }
-            catch { /* best effort */ }
+            catch
+            { /* best effort */
+            }
+
             _app?.Dispose();
 
             try
             {
                 if (_tempWebRoot is not null && Directory.Exists(_tempWebRoot))
+                {
                     Directory.Delete(_tempWebRoot, recursive: true);
+                }
             }
-            catch { /* best effort */ }
+            catch
+            { /* best effort */
+            }
         }
 
         private static void SeedWebRoot(string webRoot)
@@ -145,9 +155,13 @@ namespace GlaaTrips.Tests
             {
                 var candidate = Path.Combine(dir.FullName, "GlaaTrips.csproj");
                 if (File.Exists(candidate))
+                {
                     return candidate;
+                }
+
                 dir = dir.Parent;
             }
+
             throw new FileNotFoundException("Could not locate GlaaTrips.csproj above the test output directory.");
         }
 
@@ -160,15 +174,22 @@ namespace GlaaTrips.Tests
             while (DateTime.UtcNow < deadline)
             {
                 if (_app is { HasExited: true })
+                {
                     throw new InvalidOperationException($"The web app exited early with code {_app.ExitCode}.");
+                }
 
                 try
                 {
                     var res = await client.GetAsync(baseUrl + "/");
                     if ((int)res.StatusCode < 500)
+                    {
                         return;
+                    }
                 }
-                catch (Exception ex) { last = ex; }
+                catch (Exception ex)
+                {
+                    last = ex;
+                }
 
                 await Task.Delay(500);
             }

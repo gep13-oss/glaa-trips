@@ -18,9 +18,9 @@ namespace GlaaTrips.Pages
 {
     public class AlbumsModel : PageModel
     {
-        private AlbumCollection _ac;
-        private IWebHostEnvironment _environment;
-        private ImageProcessor _processor;
+        private readonly AlbumCollection _ac;
+        private readonly IWebHostEnvironment _environment;
+        private readonly ImageProcessor _processor;
 
         public AlbumsModel(AlbumCollection ac, IWebHostEnvironment environment, ImageProcessor processor)
         {

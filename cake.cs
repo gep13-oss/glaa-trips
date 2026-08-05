@@ -6,10 +6,10 @@
 //
 // Targets:
 //   Clean         - remove build outputs (bin/obj) and dotnet-clean the solution
-//   Build         - build the solution
+//   VerifyFormat  - fail if dotnet-format would change anything (formatting gate)
+//   Build         - verify formatting, then build the solution
 //   Test          - build, install the Playwright browser, run the Playwright suite
 //   Format        - apply dotnet-format (whitespace + style + analyzers)
-//   VerifyFormat  - fail if dotnet-format would change anything (for CI)
 //
 // Usage:
 //   dotnet cake.cs --target=Build
@@ -34,6 +34,7 @@ Task("Clean")
     });
 
 Task("Build")
+    .IsDependentOn("VerifyFormat")
     .Does(() =>
     {
         DotNetBuild(solution, new DotNetBuildSettings { Configuration = configuration });
@@ -82,7 +83,20 @@ Task("Format")
 Task("VerifyFormat")
     .Does(() =>
     {
-        DotNetFormat(solution, new DotNetFormatSettings { VerifyNoChanges = true });
+        DotNetFormat(solution, new DotNetFormatSettings
+        {
+            VerifyNoChanges = true,
+
+            // MVC1001 (auth attributes ignored on Razor Page handler methods)
+            // has no formatter fix and is a tracked security-pass item, so it
+            // would otherwise block this gate forever. Exclude it here so the
+            // gate enforces formatting + StyleCop while MVC1001 stays a visible
+            // build warning. TEMPORARY — remove this exclusion once the auth
+            // model is fixed and MVC1001 no longer fires.
+            ArgumentCustomization = args => args
+                .Append("--exclude-diagnostics")
+                .Append("MVC1001"),
+        });
     });
 
 Task("Default")

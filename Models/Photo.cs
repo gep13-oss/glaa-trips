@@ -8,8 +8,8 @@ namespace GlaaTrips.Models
 {
     public class Photo : IPaginator
     {
-        private Dictionary<int, int> _heights = new Dictionary<int, int>();
-        private static Regex _size = new Regex(@"(?<name>.+)-(?<width>[0-9]+)x(?<height>[0-9]+).", RegexOptions.Compiled);
+        private readonly Dictionary<int, int> _heights = new Dictionary<int, int>();
+        private static readonly Regex _size = new Regex(@"(?<name>.+)-(?<width>[0-9]+)x(?<height>[0-9]+).", RegexOptions.Compiled);
 
         public Photo(Album album, FileInfo file)
         {

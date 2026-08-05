@@ -7,6 +7,7 @@ namespace GlaaTrips.TagHelpers
     public class PhotoTagHelper : TagHelper
     {
         public Photo Photo { get; set; }
+
         public ImageType Type { get; set; }
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
@@ -32,5 +33,4 @@ namespace GlaaTrips.TagHelpers
             }
         }
     }
-
 }

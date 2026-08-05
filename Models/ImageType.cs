@@ -4,6 +4,6 @@
     {
         Thumbnail = 190,
         Cover = 375,
-        Full = 960
+        Full = 960,
     }
 }
