@@ -5,11 +5,10 @@ using System.Net;
 using GlaaTrips.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace GlaaTrips.Pages
 {
-    public class PhotoModel : PageModel
+    public class PhotoModel : AdminHandlerPageModel
     {
         private readonly AlbumCollection _ac;
         private readonly IWebHostEnvironment _environment;
@@ -30,6 +29,11 @@ namespace GlaaTrips.Pages
 
         public IActionResult OnPostRename(string albumName, string photoName)
         {
+            if (RequireAdmin() is { } challenge)
+            {
+                return challenge;
+            }
+
             var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(albumName, StringComparison.OrdinalIgnoreCase));
             Photo = album.Photos.FirstOrDefault(p => p.DisplayName.Equals(photoName, StringComparison.OrdinalIgnoreCase));
             string name = Request.Form["name"] + Path.GetExtension(Photo.AbsolutePath);
@@ -60,6 +64,11 @@ namespace GlaaTrips.Pages
 
         public IActionResult OnPostDelete(string albumName, string photoName)
         {
+            if (RequireAdmin() is { } challenge)
+            {
+                return challenge;
+            }
+
             var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(albumName, StringComparison.OrdinalIgnoreCase));
             Photo = album.Photos.FirstOrDefault(p => p.DisplayName.Equals(photoName, StringComparison.OrdinalIgnoreCase));
             album.Photos.Remove(Photo);

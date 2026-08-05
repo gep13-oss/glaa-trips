@@ -19,7 +19,15 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-}).AddCookie();
+}).AddCookie(options =>
+{
+    // The admin handlers challenge unauthenticated requests; without these the
+    // cookie handler would redirect to its default /Account/Login, which does
+    // not exist here. The login page lives at /login and reads returnUrl.
+    options.LoginPath = "/login";
+    options.AccessDeniedPath = "/login";
+    options.ReturnUrlParameter = "returnUrl";
+});
 
 // Reads ApplicationInsights:ConnectionString from configuration when present.
 builder.Services.AddApplicationInsightsTelemetry();

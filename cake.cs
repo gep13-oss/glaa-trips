@@ -83,20 +83,7 @@ Task("Format")
 Task("VerifyFormat")
     .Does(() =>
     {
-        DotNetFormat(solution, new DotNetFormatSettings
-        {
-            VerifyNoChanges = true,
-
-            // MVC1001 (auth attributes ignored on Razor Page handler methods)
-            // has no formatter fix and is a tracked security-pass item, so it
-            // would otherwise block this gate forever. Exclude it here so the
-            // gate enforces formatting + StyleCop while MVC1001 stays a visible
-            // build warning. TEMPORARY — remove this exclusion once the auth
-            // model is fixed and MVC1001 no longer fires.
-            ArgumentCustomization = args => args
-                .Append("--exclude-diagnostics")
-                .Append("MVC1001"),
-        });
+        DotNetFormat(solution, new DotNetFormatSettings { VerifyNoChanges = true });
     });
 
 Task("Default")

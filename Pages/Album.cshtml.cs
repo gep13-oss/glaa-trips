@@ -7,16 +7,14 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using GlaaTrips.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Slugify;
 
 namespace GlaaTrips.Pages
 {
-    public class AlbumsModel : PageModel
+    public class AlbumsModel : AdminHandlerPageModel
     {
         private readonly AlbumCollection _ac;
         private readonly IWebHostEnvironment _environment;
@@ -43,10 +41,13 @@ namespace GlaaTrips.Pages
             return Page();
         }
 
-        [Authorize]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> OnPostDelete(string name)
         {
+            if (RequireAdmin() is { } challenge)
+            {
+                return challenge;
+            }
+
             string path = Path.Combine(_environment.WebRootPath, "albums", name);
 
             if (Directory.Exists(path))
@@ -82,9 +83,13 @@ namespace GlaaTrips.Pages
             return new RedirectResult("~/");
         }
 
-        [Authorize]
         public async Task<IActionResult> OnPostCreate(string name, string description, string visited, double latitude, double longitude)
         {
+            if (RequireAdmin() is { } challenge)
+            {
+                return challenge;
+            }
+
             string markerJsonPath = Path.Combine(_environment.WebRootPath, "albums", "markers.json");
 
             SlugHelper helper = new SlugHelper();
@@ -138,9 +143,13 @@ namespace GlaaTrips.Pages
             return new RedirectResult($"~/album/{slugName}/");
         }
 
-        [Authorize]
         public async Task<IActionResult> OnPostEdit(string name, string description, string visited, double latitude, double longitude)
         {
+            if (RequireAdmin() is { } challenge)
+            {
+                return challenge;
+            }
+
             var regex = new Regex("\\/Album\\/(.*)\\/edit");
             var slugName = string.Empty;
             var match = regex.Match(HttpContext.Request.Path);
@@ -176,9 +185,13 @@ namespace GlaaTrips.Pages
             return new RedirectResult($"~/album/{slugName}/");
         }
 
-        [Authorize]
         public async Task<IActionResult> OnPostUpload(string name, ICollection<IFormFile> files)
         {
+            if (RequireAdmin() is { } challenge)
+            {
+                return challenge;
+            }
+
             var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(name, StringComparison.OrdinalIgnoreCase));
 
             foreach (var file in files.Where(f => _ac.IsImageFile(f.FileName)))
