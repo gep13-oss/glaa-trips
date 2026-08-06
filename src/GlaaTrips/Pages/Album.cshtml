@@ -38,11 +38,18 @@
     <meta itemprop="position" content="2" />
 </div>
 
-<div class="pic photolist">
+<div id="gallery" class="pic photolist">
     @{
         foreach (Photo photo in Model.Album.Photos)
         {
-            <a href="@photo.Link" data-text="@photo.DisplayName">
+            // The full-size (960px-wide) image and its height drive the PhotoSwipe
+            // lightbox. The href stays the per-photo page, so no-JS visitors,
+            // crawlers and admins still reach it; gallery.js opens the lightbox on
+            // click. Razor omits data-pswp-src when no full image exists, which
+            // takes that photo out of the lightbox and leaves the plain page link.
+            var fullImage = photo.GetThumbnailLink((int)ImageType.Full, out int fullHeight);
+            <a href="@photo.Link" data-text="@photo.DisplayName"
+               data-pswp-src="@fullImage" data-pswp-width="@((int)ImageType.Full)" data-pswp-height="@fullHeight">
                 <img photo="@photo" Type="Thumbnail" />
             </a>
         }
@@ -50,10 +57,12 @@
 </div>
 
 @section scripts {
+    <script type="module" src="/js/gallery.js"></script>
     <script if-authorized src="/js/admin.js" async></script>
 }
 
 @section head {
+    <link rel="stylesheet" href="/lib/photoswipe/photoswipe.css" />
     <link if-authorized rel="stylesheet" href="/css/admin.css" />
     @if (Model.Album.Next != null)
     {

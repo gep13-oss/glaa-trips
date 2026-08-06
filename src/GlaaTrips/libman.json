@@ -15,6 +15,15 @@
         "images/layers.png",
         "images/layers-2x.png"
       ]
+    },
+    {
+      "library": "photoswipe@5.4.4",
+      "destination": "wwwroot/lib/photoswipe/",
+      "files": [
+        "photoswipe.esm.min.js",
+        "photoswipe-lightbox.esm.min.js",
+        "photoswipe.css"
+      ]
     }
   ]
 }
