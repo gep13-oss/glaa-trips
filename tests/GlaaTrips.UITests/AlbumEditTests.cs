@@ -14,16 +14,14 @@ namespace GlaaTrips.UITests
     /// metadata, and moving its coordinates updates the map's markers.json.
     /// </summary>
     [TestFixture]
-    public class AlbumEditTests : PageTest
+    public class AlbumEditTests : UITestBase
     {
-        private static string BaseUrl => ServerFixture.BaseUrl;
-
         private static string AlbumUrl => $"{BaseUrl}/album/{ServerFixture.SampleAlbumSlug}/";
 
         [Test]
         public async Task Authenticated_admin_can_edit_album_metadata()
         {
-            await SignIn();
+            await SignInAsync();
             await Page.GotoAsync(AlbumUrl);
 
             var newDescription = "Edited by AlbumEditTests " + System.Guid.NewGuid().ToString("N");
@@ -42,7 +40,7 @@ namespace GlaaTrips.UITests
         [Test]
         public async Task Editing_album_coordinates_updates_markers_json()
         {
-            await SignIn();
+            await SignInAsync();
             await Page.GotoAsync(AlbumUrl);
 
             await Page.FillAsync("#admin #latitude", "12.34");
@@ -65,15 +63,6 @@ namespace GlaaTrips.UITests
                 Assert.That(marker!.Lat, Is.EqualTo(12.34), "latitude should reflect the edit");
                 Assert.That(marker!.Long, Is.EqualTo(56.78), "longitude should reflect the edit");
             });
-        }
-
-        private async Task SignIn()
-        {
-            await Page.GotoAsync(BaseUrl + "/login");
-            await Page.FillAsync("#username", ServerFixture.TestUsername);
-            await Page.FillAsync("#password", ServerFixture.TestPassword);
-            await Page.ClickAsync("input[type=submit]");
-            await Page.WaitForURLAsync(BaseUrl + "/");
         }
 
         private sealed class MarkerDto

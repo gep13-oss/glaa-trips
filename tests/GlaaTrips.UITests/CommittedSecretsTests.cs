@@ -12,12 +12,10 @@ namespace GlaaTrips.UITests
     [TestFixture]
     public class CommittedSecretsTests : PageTest
     {
-        private static string BaseUrl => ServerFixture.BaseUrl;
-
         [Test]
         public async Task Home_page_does_not_leak_a_google_maps_api_key()
         {
-            var response = await Page.APIRequest.GetAsync(BaseUrl + "/");
+            var response = await Page.APIRequest.GetAsync(ServerFixture.BaseUrl + "/");
             var body = await response.TextAsync();
 
             // "AIzaSy" is the fixed prefix of every Google API key; catching the

@@ -14,10 +14,8 @@ namespace GlaaTrips.UITests
     /// while an authenticated admin can still create and delete.
     /// </summary>
     [TestFixture]
-    public class AdminAuthorizationTests : PageTest
+    public class AdminAuthorizationTests : UITestBase
     {
-        private static string BaseUrl => ServerFixture.BaseUrl;
-
         // Every mutating admin endpoint. A real attacker can obtain an
         // (anonymous) antiforgery token, so exercising these with a valid token
         // proves the server-side authorization guard — not just antiforgery.
@@ -48,7 +46,7 @@ namespace GlaaTrips.UITests
         [Test]
         public async Task Authenticated_admin_can_create_then_delete_an_album()
         {
-            await SignIn();
+            await SignInAsync();
 
             // Create a throwaway album via the home-page admin form (the form
             // and its antiforgery token are handled by the real browser).
@@ -76,34 +74,16 @@ namespace GlaaTrips.UITests
             Assert.That(afterDelete.Status, Is.EqualTo(404), "the album should be gone after the admin deletes it");
         }
 
-        private async Task SignIn()
-        {
-            await Page.GotoAsync(BaseUrl + "/login");
-            await Page.FillAsync("#username", ServerFixture.TestUsername);
-            await Page.FillAsync("#password", ServerFixture.TestPassword);
-            await Page.ClickAsync("input[type=submit]");
-            await Page.WaitForURLAsync(BaseUrl + "/");
-        }
-
         private async Task<IAPIResponse> PostAnonymouslyWithToken(string path)
         {
             // Rendering the login page yields a valid antiforgery token + cookie
             // (Razor Pages validate antiforgery on every POST). Both are
-            // anonymous-scoped — exactly what an unauthenticated attacker has.
-            // Page.APIRequest shares the browser context's cookie jar, so the
-            // matching cookie is sent with the POST below.
-            await Page.GotoAsync(BaseUrl + "/login");
-            var token = await Page.GetAttributeAsync("input[name='__RequestVerificationToken']", "value");
+            // anonymous-scoped — exactly what an unauthenticated attacker has, since
+            // this runs without signing in. Page.APIRequest shares the browser
+            // context's cookie jar, so the matching cookie is sent with the POST.
+            var token = await AntiforgeryTokenAsync("/login");
 
-            return await Page.APIRequest.PostAsync(BaseUrl + path, new APIRequestContextOptions
-            {
-                MaxRedirects = 0,
-                Headers = new Dictionary<string, string>
-                {
-                    ["content-type"] = "application/x-www-form-urlencoded",
-                },
-                Data = "__RequestVerificationToken=" + Uri.EscapeDataString(token!),
-            });
+            return await Page.APIRequest.PostAsync(BaseUrl + path, FormPost(token));
         }
     }
 }
