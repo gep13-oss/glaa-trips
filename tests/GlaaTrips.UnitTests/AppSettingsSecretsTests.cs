@@ -6,10 +6,9 @@ namespace GlaaTrips.UnitTests
 {
     /// <summary>
     /// Fails if a real secret is ever committed to <c>appsettings.json</c>. The
-    /// admin credential (hash/salt/username), the Application Insights connection
-    /// string and the Google Maps API key must be supplied per environment via
-    /// user-secrets or environment variables, leaving these entries blank in the
-    /// committed file.
+    /// admin credential (hash/salt/username) and the Google Maps API key must be
+    /// supplied per environment via user-secrets or environment variables, leaving
+    /// these entries blank in the committed file.
     /// </summary>
     [TestFixture]
     public class AppSettingsSecretsTests
@@ -17,7 +16,6 @@ namespace GlaaTrips.UnitTests
         [TestCase("user:username")]
         [TestCase("user:password")]
         [TestCase("user:salt")]
-        [TestCase("ApplicationInsights:ConnectionString")]
         [TestCase("GoogleMaps:ApiKey")]
         public void Committed_appsettings_has_no_populated_secret(string configPath)
         {

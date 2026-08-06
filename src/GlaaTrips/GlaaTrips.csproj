@@ -8,11 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <!-- Retained for now; slated for review/removal in the dependency-reduction step. -->
-        <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="3.1.2" />
         <PackageReference Include="SkiaSharp" Version="2.88.9" />
-        <PackageReference Include="WebEssentials.AspNetCore.CdnTagHelpers" Version="1.0.21" />
-        <PackageReference Include="Slugify.Core" Version="3.0.0" />
     </ItemGroup>
 
     <!--
@@ -22,5 +18,14 @@
         * System.Text.Json          - ships in the shared framework.
       MvcRazorCompileOnPublish / ApplicationInsightsResourceId dropped
       (defaults / not needed for build).
+
+      Removed in the dependency-reduction step:
+        * Microsoft.ApplicationInsights.AspNetCore - heavyweight telemetry not
+          warranted for a low-traffic family site; the optional startup gate was
+          removed with it.
+        * WebEssentials.AspNetCore.CdnTagHelpers   - only rewrote asset URLs to an
+          Azure edge CDN; assets now serve directly from the app.
+        * Slugify.Core                             - replaced by the inline
+          Models/SlugHelper, its single use site.
     -->
 </Project>

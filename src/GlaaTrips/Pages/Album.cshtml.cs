@@ -9,7 +9,6 @@ using GlaaTrips.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Slugify;
 
 namespace GlaaTrips.Pages
 {
@@ -72,8 +71,7 @@ namespace GlaaTrips.Pages
                 return challenge;
             }
 
-            SlugHelper helper = new SlugHelper();
-            string slugName = helper.GenerateSlug(name);
+            string slugName = SlugHelper.GenerateSlug(name);
 
             // The slug is normally already separator-free, but an all-punctuation
             // title can slug to an empty string, which would resolve to the albums
