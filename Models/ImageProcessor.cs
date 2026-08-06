@@ -8,38 +8,65 @@ namespace GlaaTrips.Models
     {
         private const int Quality = 75;
 
-        public void CreateThumbnails(Stream imageStream, string filePath)
+        /// <summary>
+        /// Generates the thumbnail set for a saved image.
+        /// </summary>
+        /// <param name="imageStream">A readable stream over the source image bytes.</param>
+        /// <param name="filePath">The saved image whose thumbnails are produced.</param>
+        /// <returns><c>true</c> when thumbnails were generated; <c>false</c> when the
+        /// stream does not contain an image SkiaSharp can decode.</returns>
+        public bool CreateThumbnails(Stream imageStream, string filePath)
         {
             string dir = Path.Combine(Path.GetDirectoryName(filePath), "thumbnail");
             string displayName = Path.GetFileNameWithoutExtension(filePath);
             string ext = Path.GetExtension(filePath);
 
-            Directory.CreateDirectory(dir);
-
             var format = GetFormat(filePath);
 
             using (var inputStream = new SKManagedStream(imageStream))
             using (var codec = SKCodec.Create(inputStream))
-            using (var original = SKBitmap.Decode(codec))
-            using (var image = HandleOrientation(original, codec.EncodedOrigin))
             {
-                foreach (ImageType type in Enum.GetValues(typeof(ImageType)))
+                // SKCodec/SKBitmap return null when the bytes are not a decodable
+                // image — a file with an image extension but non-image or corrupt
+                // content, or a format SkiaSharp cannot handle. Bail out instead of
+                // dereferencing null (which surfaced as a 500 on upload).
+                if (codec == null)
                 {
-                    int width = (int)type;
-                    int height = (int)Math.Round(width * ((float)image.Height / image.Width));
+                    return false;
+                }
 
-                    string thumbnailPath = Path.Combine(dir, $"{displayName}-{width}x{height}{ext}");
-                    var info = new SKImageInfo(width, height);
-
-                    using (var resized = image.Resize(info, SKFilterQuality.High))
-                    using (var thumb = SKImage.FromBitmap(resized))
-                    using (var fs = new FileStream(thumbnailPath, FileMode.CreateNew, FileAccess.ReadWrite))
+                using (var original = SKBitmap.Decode(codec))
+                {
+                    if (original == null)
                     {
-                        thumb.Encode(format, Quality)
-                             .SaveTo(fs);
+                        return false;
+                    }
+
+                    Directory.CreateDirectory(dir);
+
+                    using (var image = HandleOrientation(original, codec.EncodedOrigin))
+                    {
+                        foreach (ImageType type in Enum.GetValues(typeof(ImageType)))
+                        {
+                            int width = (int)type;
+                            int height = (int)Math.Round(width * ((float)image.Height / image.Width));
+
+                            string thumbnailPath = Path.Combine(dir, $"{displayName}-{width}x{height}{ext}");
+                            var info = new SKImageInfo(width, height);
+
+                            using (var resized = image.Resize(info, SKFilterQuality.High))
+                            using (var thumb = SKImage.FromBitmap(resized))
+                            using (var fs = new FileStream(thumbnailPath, FileMode.CreateNew, FileAccess.ReadWrite))
+                            {
+                                thumb.Encode(format, Quality)
+                                     .SaveTo(fs);
+                            }
+                        }
                     }
                 }
             }
+
+            return true;
         }
 
         private static SKEncodedImageFormat GetFormat(string fileName)

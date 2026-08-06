@@ -60,5 +60,28 @@ namespace GlaaTrips.UITests
                 FormPost(token));
             Assert.That(delete.Status, Is.EqualTo(302), "the cleanup delete should redirect back to the album");
         }
+
+        [Test]
+        public async Task Uploading_a_file_that_is_not_a_real_image_is_skipped_without_error()
+        {
+            await SignInAsync();
+            await Page.GotoAsync($"{BaseUrl}/album/{ServerFixture.SampleAlbumSlug}/");
+
+            await Page.SetInputFilesAsync("#files", new FilePayload
+            {
+                Name = "bad-shot.png",
+                MimeType = "image/png",
+                Buffer = System.Text.Encoding.UTF8.GetBytes("this is not a real image"),
+            });
+            await Page.ClickAsync("#btnfiles");
+
+            // The upload still completes (redirects back to the album) instead of
+            // 500ing on the undecodable content...
+            await Page.WaitForURLAsync(new Regex($"/album/{ServerFixture.SampleAlbumSlug}/$"));
+
+            // ...and the bad file is skipped, so no photo is added for it.
+            await Expect(Page.Locator($"a[href='/photo/{ServerFixture.SampleAlbumSlug}/bad-shot/']"))
+                .ToHaveCountAsync(0);
+        }
     }
 }

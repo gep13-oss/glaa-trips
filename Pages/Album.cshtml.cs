@@ -191,9 +191,20 @@ namespace GlaaTrips.Pages
                     await file.CopyToAsync(fileStream);
                 }
 
+                bool created;
+
                 using (var savedImage = System.IO.File.OpenRead(filePath))
                 {
-                    _processor.CreateThumbnails(savedImage, filePath);
+                    created = _processor.CreateThumbnails(savedImage, filePath);
+                }
+
+                if (!created)
+                {
+                    // The bytes were not a decodable image despite the extension;
+                    // drop the saved original and skip it — consistent with how a
+                    // non-image extension is skipped above — rather than 500.
+                    System.IO.File.Delete(filePath);
+                    continue;
                 }
 
                 uploaded.Add(new Photo(album, new FileInfo(filePath)));
