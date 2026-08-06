@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using GlaaTrips.Models;
 using Microsoft.AspNetCore.Hosting;
@@ -60,30 +59,8 @@ namespace GlaaTrips.Pages
                 Directory.Delete(path, true);
             }
 
-            var existingAlbum = _ac.Albums.FirstOrDefault(a => a.Id.Equals(name, StringComparison.OrdinalIgnoreCase));
-
-            if (existingAlbum != null)
-            {
-                _ac.Albums.Remove(existingAlbum);
-            }
-
-            var markers = new List<Marker>();
-            string markerJsonPath = Path.Combine(_environment.WebRootPath, "albums", "markers.json");
-
-            foreach (var album in _ac.Albums)
-            {
-                var marker = new Marker();
-                marker.Lat = album.Latitude;
-                marker.Long = album.Longitude;
-                marker.Slug = album.Id;
-
-                markers.Add(marker);
-            }
-
-            using (var createStream = System.IO.File.Create(markerJsonPath))
-            {
-                await JsonSerializer.SerializeAsync<List<Marker>>(createStream, markers);
-            }
+            _ac.Remove(name);
+            await _ac.WriteMarkersAsync();
 
             return new RedirectResult("~/");
         }
@@ -95,8 +72,6 @@ namespace GlaaTrips.Pages
                 return challenge;
             }
 
-            string markerJsonPath = Path.Combine(_environment.WebRootPath, "albums", "markers.json");
-
             SlugHelper helper = new SlugHelper();
             string slugName = helper.GenerateSlug(name);
 
@@ -106,17 +81,6 @@ namespace GlaaTrips.Pages
             if (!SafePathHelper.IsValidSegment(slugName))
             {
                 return BadRequest();
-            }
-
-            List<Marker> markers = null;
-
-            if (System.IO.File.Exists(markerJsonPath))
-            {
-                markers = JsonSerializer.Deserialize<List<Marker>>(System.IO.File.ReadAllText(markerJsonPath));
-            }
-            else
-            {
-                markers = new List<Marker>();
             }
 
             string path = Path.Combine(_environment.WebRootPath, "albums", slugName);
@@ -131,52 +95,43 @@ namespace GlaaTrips.Pages
             albumMetaData.Latitude = latitude;
             albumMetaData.Longitude = longitude;
 
-            var marker = new Marker();
-            marker.Lat = latitude;
-            marker.Long = longitude;
-            marker.Slug = slugName;
-
-            markers.Add(marker);
-
             using (var createStream = System.IO.File.Create(metadataFileName))
             {
                 await JsonSerializer.SerializeAsync<AlbumMetaData>(createStream, albumMetaData);
             }
 
-            using (var createStream = System.IO.File.Create(markerJsonPath))
-            {
-                await JsonSerializer.SerializeAsync<List<Marker>>(createStream, markers);
-            }
-
-            var album = new Album(path, _ac, albumMetaData);
-
-            _ac.Albums.Insert(0, album);
-            _ac.Sort();
+            _ac.Add(new Album(path, _ac, albumMetaData));
+            await _ac.WriteMarkersAsync();
 
             return new RedirectResult($"~/album/{slugName}/");
         }
 
-        public async Task<IActionResult> OnPostEdit(string name, string description, string visited, double latitude, double longitude)
+        public async Task<IActionResult> OnPostEdit([FromRoute(Name = "name")] string slug, string name, string description, string visited, double latitude, double longitude)
         {
             if (RequireAdmin() is { } challenge)
             {
                 return challenge;
             }
 
-            var regex = new Regex("\\/Album\\/(.*)\\/edit");
-            var slugName = string.Empty;
-            var match = regex.Match(HttpContext.Request.Path);
-            if (match.Success)
-            {
-                slugName = match.Groups[1].Value;
-            }
+            // The album slug is the route value. It is bound explicitly from the
+            // route because the edit form also posts a "name" field (the album's
+            // display name), and Razor Pages' default binder would otherwise let
+            // that form value win. The previous implementation scraped the slug
+            // out of the request path with a "/Album/" regex that never matched
+            // the lower-case route, so every edit fell through to BadRequest.
+            string albumsRoot = Path.Combine(_environment.WebRootPath, "albums");
 
-            if (!SafePathHelper.IsValidSegment(slugName))
+            if (!SafePathHelper.TryCombineWithin(albumsRoot, slug, out string path))
             {
                 return BadRequest();
             }
 
-            string path = Path.Combine(_environment.WebRootPath, "albums", slugName);
+            var existingAlbum = _ac.Albums.FirstOrDefault(a => a.Id.Equals(slug, StringComparison.OrdinalIgnoreCase));
+
+            if (existingAlbum == null)
+            {
+                return NotFound();
+            }
 
             var metadataFileName = Path.Combine(path, "data.json");
             var albumMetaData = new AlbumMetaData();
@@ -191,16 +146,14 @@ namespace GlaaTrips.Pages
                 await JsonSerializer.SerializeAsync<AlbumMetaData>(createStream, albumMetaData);
             }
 
-            var existingAlbum = _ac.Albums.FirstOrDefault(a => a.Id.Equals(slugName, StringComparison.OrdinalIgnoreCase));
-            var updatedAlbum = new Album(slugName, _ac, albumMetaData);
+            // Reload from disk so the refreshed album keeps its absolute path and
+            // its photos, then rewrite markers.json so a moved pin is reflected on
+            // the map. The old code built `new Album(slug, ...)`, which set a
+            // relative path and an empty photo list, and never touched markers.json.
+            _ac.ReloadFromDisk(path);
+            await _ac.WriteMarkersAsync();
 
-            if (existingAlbum != null)
-            {
-                _ac.Albums.Remove(existingAlbum);
-                _ac.Albums.Insert(0, updatedAlbum);
-            }
-
-            return new RedirectResult($"~/album/{slugName}/");
+            return new RedirectResult($"~/album/{slug}/");
         }
 
         public async Task<IActionResult> OnPostUpload(string name, ICollection<IFormFile> files)
@@ -211,6 +164,8 @@ namespace GlaaTrips.Pages
             }
 
             var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+            var uploaded = new List<Photo>();
 
             foreach (var file in files.Where(f => _ac.IsImageFile(f.FileName)))
             {
@@ -229,11 +184,10 @@ namespace GlaaTrips.Pages
                     await file.CopyToAsync(fileStream);
                 }
 
-                var photo = new Photo(album, new FileInfo(filePath));
-                album.Photos.Insert(0, photo);
+                uploaded.Add(new Photo(album, new FileInfo(filePath)));
             }
 
-            album.Sort();
+            album.AddPhotos(uploaded);
 
             return new RedirectResult($"~/album/{WebUtility.UrlEncode(name).Replace('+', ' ')}/");
         }

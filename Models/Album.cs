@@ -8,6 +8,7 @@ namespace GlaaTrips.Models
     public class Album : IPaginator
     {
         private readonly AlbumCollection _ac;
+        private readonly object _sync = new object();
 
         public Album(string absolutePath, AlbumCollection ac)
             : this(absolutePath, ac, null)
@@ -102,11 +103,58 @@ namespace GlaaTrips.Models
         }
 
         /// <summary>
+        /// Adds photos to the album and re-sorts. Like <see cref="AlbumCollection"/>,
+        /// the album's <see cref="Photos"/> list is mutated copy-on-write under a
+        /// lock so concurrent readers always enumerate a stable snapshot.
+        /// </summary>
+        /// <param name="photos">The photos to add.</param>
+        public void AddPhotos(IEnumerable<Photo> photos)
+        {
+            lock (_sync)
+            {
+                var updated = new List<Photo>(Photos);
+                updated.AddRange(photos);
+                Photos = updated.OrderBy(p => p.DisplayName).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Removes a photo from the album, if it is present.
+        /// </summary>
+        /// <param name="photo">The photo to remove.</param>
+        public void RemovePhoto(Photo photo)
+        {
+            lock (_sync)
+            {
+                Photos = Photos.Where(p => p != photo).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Replaces <paramref name="oldPhoto"/> with <paramref name="newPhoto"/>
+        /// (for example after a rename) and re-sorts.
+        /// </summary>
+        /// <param name="oldPhoto">The photo being replaced.</param>
+        /// <param name="newPhoto">The photo to put in its place.</param>
+        public void ReplacePhoto(Photo oldPhoto, Photo newPhoto)
+        {
+            lock (_sync)
+            {
+                var updated = Photos.Where(p => p != oldPhoto).ToList();
+                updated.Add(newPhoto);
+                Photos = updated.OrderBy(p => p.DisplayName).ToList();
+            }
+        }
+
+        /// <summary>
         /// Sorts the photos in the album.
         /// </summary>
         public void Sort()
         {
-            Photos = Photos.OrderBy(p => p.DisplayName).ToList();
+            lock (_sync)
+            {
+                Photos = Photos.OrderBy(p => p.DisplayName).ToList();
+            }
         }
     }
 }

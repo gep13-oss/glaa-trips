@@ -46,13 +46,11 @@ namespace GlaaTrips.Pages
             string name = requestedName + Path.GetExtension(Photo.AbsolutePath);
 
             var newPhotoPath = new FileInfo(Path.Combine(album.AbsolutePath, name));
-            int index = album.Photos.IndexOf(Photo);
 
             System.IO.File.Move(Photo.AbsolutePath, newPhotoPath.FullName);
             var newPhoto = new Photo(album, newPhotoPath);
 
-            album.Photos.Insert(index, newPhoto);
-            album.Photos.RemoveAt(index + 1);
+            album.ReplacePhoto(Photo, newPhoto);
 
             // Rename thumbnails
             string folder = Path.Combine(album.AbsolutePath, "thumbnail");
@@ -63,8 +61,6 @@ namespace GlaaTrips.Pages
                 string newThumbnail = Path.Combine(folder, Path.GetFileName(file).Replace(Photo.DisplayName, newPhoto.DisplayName));
                 System.IO.File.Move(file, newThumbnail);
             }
-
-            Photo.Album.Sort();
 
             return new RedirectResult($"~/photo/{WebUtility.UrlEncode(albumName).Replace('+', ' ')}/{newPhoto.DisplayName}/");
         }
@@ -78,7 +74,7 @@ namespace GlaaTrips.Pages
 
             var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(albumName, StringComparison.OrdinalIgnoreCase));
             Photo = album.Photos.FirstOrDefault(p => p.DisplayName.Equals(photoName, StringComparison.OrdinalIgnoreCase));
-            album.Photos.Remove(Photo);
+            album.RemovePhoto(Photo);
 
             if (System.IO.File.Exists(Photo.AbsolutePath))
             {
