@@ -23,7 +23,7 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 
-var solution = "./GlaaTrips.sln";
+var solution = "./GlaaTrips.slnx";
 var unitTestProject = "./tests/GlaaTrips.UnitTests/GlaaTrips.UnitTests.csproj";
 var uiTestProject = "./tests/GlaaTrips.UITests/GlaaTrips.UITests.csproj";
 var testTfm = "net10.0";

@@ -21,7 +21,7 @@
        project reference is required. This is deliberately the only test project
        that links the app assembly; the UITests project stays black-box. -->
   <ItemGroup>
-    <ProjectReference Include="..\..\GlaaTrips.csproj" />
+    <ProjectReference Include="..\..\src\GlaaTrips\GlaaTrips.csproj" />
   </ItemGroup>
 
   <ItemGroup>

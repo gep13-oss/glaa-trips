@@ -55,15 +55,17 @@ namespace GlaaTrips.UnitTests
 
             while (dir is not null)
             {
-                if (File.Exists(Path.Combine(dir.FullName, "GlaaTrips.csproj")))
+                var projectDir = Path.Combine(dir.FullName, "src", "GlaaTrips");
+
+                if (File.Exists(Path.Combine(projectDir, "GlaaTrips.csproj")))
                 {
-                    return Path.Combine(dir.FullName, "appsettings.json");
+                    return Path.Combine(projectDir, "appsettings.json");
                 }
 
                 dir = dir.Parent;
             }
 
-            throw new FileNotFoundException("Could not locate GlaaTrips.csproj above the test output directory.");
+            throw new FileNotFoundException("Could not locate src/GlaaTrips/GlaaTrips.csproj above the test output directory.");
         }
     }
 }

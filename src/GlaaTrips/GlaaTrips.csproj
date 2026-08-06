@@ -5,10 +5,6 @@
         <Nullable>disable</Nullable>
         <ImplicitUsings>disable</ImplicitUsings>
         <UserSecretsId>5966cb71-2501-4cab-a0aa-77b24d37f516</UserSecretsId>
-        <!-- This web app lives at the repo root, so its default item globs
-             would otherwise sweep up the Cake build script and the test
-             project that sit alongside it. Exclude them. -->
-        <DefaultItemExcludes>$(DefaultItemExcludes);cake.cs;tests/**</DefaultItemExcludes>
     </PropertyGroup>
 
     <ItemGroup>

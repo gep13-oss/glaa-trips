@@ -155,7 +155,7 @@ namespace GlaaTrips.UITests
             var dir = new DirectoryInfo(AppContext.BaseDirectory);
             while (dir is not null)
             {
-                var candidate = Path.Combine(dir.FullName, "GlaaTrips.csproj");
+                var candidate = Path.Combine(dir.FullName, "src", "GlaaTrips", "GlaaTrips.csproj");
                 if (File.Exists(candidate))
                 {
                     return candidate;
@@ -164,7 +164,7 @@ namespace GlaaTrips.UITests
                 dir = dir.Parent;
             }
 
-            throw new FileNotFoundException("Could not locate GlaaTrips.csproj above the test output directory.");
+            throw new FileNotFoundException("Could not locate src/GlaaTrips/GlaaTrips.csproj above the test output directory.");
         }
 
         private static async Task WaitForServer(string baseUrl, TimeSpan timeout)
