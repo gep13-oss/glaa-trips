@@ -48,8 +48,7 @@ namespace GlaaTrips.Models
         {
             lock (_sync)
             {
-                var updated = new List<Album>(Albums) { album };
-                Albums = updated.OrderBy(a => a.Id).ToList();
+                Albums = InDisplayOrder(new List<Album>(Albums) { album });
             }
         }
 
@@ -86,7 +85,7 @@ namespace GlaaTrips.Models
                     .Where(a => !a.Id.Equals(reloaded.Id, StringComparison.OrdinalIgnoreCase))
                     .ToList();
                 updated.Add(reloaded);
-                Albums = updated.OrderBy(a => a.Id).ToList();
+                Albums = InDisplayOrder(updated);
             }
         }
 
@@ -128,7 +127,17 @@ namespace GlaaTrips.Models
                 albums.Add(GetAlbum(albumPath));
             }
 
-            Albums = albums.OrderBy(a => a.Id).ToList();
+            Albums = InDisplayOrder(albums);
+        }
+
+        // Albums are shown newest trip first (by Visited), with the folder id as a
+        // stable tie-breaker so albums sharing a date keep a deterministic order.
+        private static List<Album> InDisplayOrder(IEnumerable<Album> albums)
+        {
+            return albums
+                .OrderByDescending(a => a.Visited)
+                .ThenBy(a => a.Id, StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
 
         private Album GetAlbum(string albumPath)

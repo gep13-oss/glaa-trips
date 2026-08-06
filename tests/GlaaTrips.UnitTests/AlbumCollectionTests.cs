@@ -48,14 +48,30 @@ namespace GlaaTrips.UnitTests
         }
 
         [Test]
-        public void Add_inserts_the_album_and_keeps_the_collection_sorted_by_id()
+        public void Add_inserts_the_album_and_orders_newest_visited_first()
         {
             var ac = new AlbumCollection(new StubWebHostEnvironment(_root));
 
-            ac.Add(new Album(AlbumPath("zebra"), ac, Meta("Zebra")));
-            ac.Add(new Album(AlbumPath("apple"), ac, Meta("Apple")));
+            ac.Add(new Album(AlbumPath("apple"), ac, Meta("Apple", new DateTime(2020, 5, 1))));
+            ac.Add(new Album(AlbumPath("zebra"), ac, Meta("Zebra", new DateTime(2026, 5, 1))));
 
-            Assert.That(ac.Albums.Select(a => a.Id), Is.EqualTo(new[] { "apple", "zebra" }));
+            // Newest trip first, regardless of insertion order or name.
+            Assert.That(ac.Albums.Select(a => a.Id), Is.EqualTo(new[] { "zebra", "apple" }));
+        }
+
+        [Test]
+        public void Albums_are_ordered_newest_visited_first_then_by_id()
+        {
+            SeedAlbumOnDisk("older", "Older", photoCount: 0, visited: new DateTime(2021, 1, 1));
+            SeedAlbumOnDisk("newer", "Newer", photoCount: 0, visited: new DateTime(2025, 1, 1));
+            SeedAlbumOnDisk("same-b", "Same B", photoCount: 0, visited: new DateTime(2023, 6, 1));
+            SeedAlbumOnDisk("same-a", "Same A", photoCount: 0, visited: new DateTime(2023, 6, 1));
+            var ac = new AlbumCollection(new StubWebHostEnvironment(_root));
+
+            Assert.That(
+                ac.Albums.Select(a => a.Id),
+                Is.EqualTo(new[] { "newer", "same-a", "same-b", "older" }),
+                "newest visited first; albums sharing a date fall back to id order");
         }
 
         [Test]
@@ -167,16 +183,16 @@ namespace GlaaTrips.UnitTests
             Task.WaitAll(readers);
 
             Assert.That(errors, Is.Empty, "no reader or writer should have thrown");
-            Assert.That(ac.Albums.Select(a => a.Id), Is.EqualTo(new[] { "a", "b", "c" }), "only the original albums should remain");
+            Assert.That(ac.Albums.Select(a => a.Id), Is.EquivalentTo(new[] { "a", "b", "c" }), "only the original albums should remain");
         }
 
-        private static AlbumMetaData Meta(string displayName)
+        private static AlbumMetaData Meta(string displayName, DateTime? visited = null)
         {
             return new AlbumMetaData
             {
                 DisplayName = displayName,
                 Description = displayName + " description",
-                Visited = new DateTime(2026, 1, 1),
+                Visited = visited ?? new DateTime(2026, 1, 1),
             };
         }
 
@@ -185,7 +201,7 @@ namespace GlaaTrips.UnitTests
             return Path.Combine(_root, "albums", slug);
         }
 
-        private string SeedAlbumOnDisk(string slug, string displayName, int photoCount, double latitude = 0, double longitude = 0)
+        private string SeedAlbumOnDisk(string slug, string displayName, int photoCount, double latitude = 0, double longitude = 0, DateTime? visited = null)
         {
             var path = AlbumPath(slug);
             Directory.CreateDirectory(path);
@@ -194,7 +210,7 @@ namespace GlaaTrips.UnitTests
             {
                 DisplayName = displayName,
                 Description = displayName + " description",
-                Visited = new DateTime(2026, 1, 1),
+                Visited = visited ?? new DateTime(2026, 1, 1),
                 Latitude = latitude,
                 Longitude = longitude,
             };

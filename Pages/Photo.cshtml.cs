@@ -21,10 +21,16 @@ namespace GlaaTrips.Pages
 
         public Photo Photo { get; set; }
 
-        public void OnGet(string albumName, string photoName)
+        public IActionResult OnGet(string albumName, string photoName)
         {
-            var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(albumName, StringComparison.OrdinalIgnoreCase));
-            Photo = album.Photos.FirstOrDefault(p => p.DisplayName.Equals(photoName, StringComparison.OrdinalIgnoreCase));
+            Photo = FindPhoto(albumName, photoName);
+
+            if (Photo == null)
+            {
+                return NotFound();
+            }
+
+            return Page();
         }
 
         public IActionResult OnPostRename(string albumName, string photoName)
@@ -41,8 +47,14 @@ namespace GlaaTrips.Pages
                 return BadRequest();
             }
 
-            var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(albumName, StringComparison.OrdinalIgnoreCase));
-            Photo = album.Photos.FirstOrDefault(p => p.DisplayName.Equals(photoName, StringComparison.OrdinalIgnoreCase));
+            Photo = FindPhoto(albumName, photoName);
+
+            if (Photo == null)
+            {
+                return NotFound();
+            }
+
+            var album = Photo.Album;
             string name = requestedName + Path.GetExtension(Photo.AbsolutePath);
 
             var newPhotoPath = new FileInfo(Path.Combine(album.AbsolutePath, name));
@@ -72,8 +84,14 @@ namespace GlaaTrips.Pages
                 return challenge;
             }
 
-            var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(albumName, StringComparison.OrdinalIgnoreCase));
-            Photo = album.Photos.FirstOrDefault(p => p.DisplayName.Equals(photoName, StringComparison.OrdinalIgnoreCase));
+            Photo = FindPhoto(albumName, photoName);
+
+            if (Photo == null)
+            {
+                return NotFound();
+            }
+
+            var album = Photo.Album;
             album.RemovePhoto(Photo);
 
             if (System.IO.File.Exists(Photo.AbsolutePath))
@@ -89,6 +107,12 @@ namespace GlaaTrips.Pages
             }
 
             return new RedirectResult($"~/album/{WebUtility.UrlEncode(albumName).Replace('+', ' ')}/");
+        }
+
+        private Photo FindPhoto(string albumName, string photoName)
+        {
+            var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(albumName, StringComparison.OrdinalIgnoreCase));
+            return album?.Photos.FirstOrDefault(p => p.DisplayName.Equals(photoName, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

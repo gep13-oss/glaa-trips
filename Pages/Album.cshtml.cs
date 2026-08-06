@@ -165,6 +165,11 @@ namespace GlaaTrips.Pages
 
             var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(name, StringComparison.OrdinalIgnoreCase));
 
+            if (album == null)
+            {
+                return NotFound();
+            }
+
             var uploaded = new List<Photo>();
 
             foreach (var file in files.Where(f => _ac.IsImageFile(f.FileName)))
@@ -177,11 +182,18 @@ namespace GlaaTrips.Pages
                     filePath = Path.ChangeExtension(filePath, file.GetHashCode() + Path.GetExtension(filePath));
                 }
 
-                using (var imageStream = file.OpenReadStream())
+                // Persist the original first, then derive thumbnails from the saved
+                // file. The previous order truncated the destination file, generated
+                // thumbnails from the upload stream, and only then wrote the original,
+                // so a decode failure left an orphaned zero-byte image behind.
                 using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
                 {
-                    _processor.CreateThumbnails(imageStream, filePath);
                     await file.CopyToAsync(fileStream);
+                }
+
+                using (var savedImage = System.IO.File.OpenRead(filePath))
+                {
+                    _processor.CreateThumbnails(savedImage, filePath);
                 }
 
                 uploaded.Add(new Photo(album, new FileInfo(filePath)));
