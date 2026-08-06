@@ -11,6 +11,16 @@
         <PackageReference Include="SkiaSharp" Version="2.88.9" />
     </ItemGroup>
 
+    <ItemGroup>
+        <!-- Restores the client-side libraries declared in libman.json (Leaflet)
+             into wwwroot/lib on build. Build-time/dev only (PrivateAssets=all);
+             keeps the dotnet-only workflow with no npm and nothing to add to the
+             Cake pipeline. wwwroot/lib is git-ignored — restored, not committed. -->
+        <PackageReference Include="Microsoft.Web.LibraryManager.Build" Version="3.0.67">
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+    </ItemGroup>
+
     <!--
       Removed in the .NET 10 migration:
         * Microsoft.AspNetCore.All  - 2.1-only metapackage; the framework

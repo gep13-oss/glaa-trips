@@ -1,15 +1,9 @@
 @page
 @inject AlbumCollection ac
-@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
     ViewData["Title"] = "Albums";
     ViewData["Description"] = $"An online gallery where I share my photos with the world. Currently showing {ac.Albums.Count} albums ({string.Join(", ", ac.Albums.Select(a => a.Id))})";
     ViewData["Image"] = Request.Scheme + "://" + Request.Host + ac.Albums.FirstOrDefault()?.CoverPhoto?.GetThumbnailLink((int)ImageType.Full, out int h);
-
-    // The Google Maps API key is supplied through configuration (user-secrets /
-    // environment) rather than hardcoded here. When it is not set, the map
-    // script is omitted so no key is ever emitted into the page source.
-    var mapsApiKey = Configuration["GoogleMaps:ApiKey"];
 }
 
 <form id="admin" if-authorized method="post" action="~/album/new/create/">
@@ -26,17 +20,8 @@
     <p>There are no albums yet. <a asp-page="Login">Sign in</a> to create new albums and upload photos.</p>
 }
 
-<!--The div element for the map -->
+<!-- The div element for the Leaflet map -->
 <div id="map"></div>
-
-<!-- Async script executes immediately and must be after any DOM elements used in callback. -->
-@if (!string.IsNullOrEmpty(mapsApiKey))
-{
-    <script
-        src="https://maps.googleapis.com/maps/api/js?key=@mapsApiKey&callback=initMap&libraries=&v=weekly"
-        async
-    ></script>
-}
 
 <h2>Albums</h2>
 
@@ -62,9 +47,12 @@
 </div>
 
 @section head {
+    <link rel="stylesheet" href="/lib/leaflet/leaflet.css" />
     <link if-authorized rel="stylesheet" href="/css/admin.css" />
 }
 
 @section scripts {
+    <script src="/lib/leaflet/leaflet.js"></script>
+    <script src="/js/map.js"></script>
     <script if-authorized src="/js/admin.js" async></script>
 }

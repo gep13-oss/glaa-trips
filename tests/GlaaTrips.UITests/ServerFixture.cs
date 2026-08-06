@@ -43,7 +43,7 @@ namespace GlaaTrips.UITests
             var webDir = Path.GetDirectoryName(webProject)!;
 
             _tempWebRoot = Path.Combine(Path.GetTempPath(), "glaa-trips-tests-" + Guid.NewGuid().ToString("N"));
-            SeedWebRoot(_tempWebRoot);
+            SeedWebRoot(_tempWebRoot, Path.Combine(webDir, "wwwroot"));
 
             var port = GetFreePort();
             BaseUrl = $"http://127.0.0.1:{port}";
@@ -110,8 +110,17 @@ namespace GlaaTrips.UITests
             }
         }
 
-        private static void SeedWebRoot(string webRoot)
+        private static void SeedWebRoot(string webRoot, string sourceWebRoot)
         {
+            // Start from the app's real static assets (css/js/img and the
+            // LibMan-restored lib/leaflet) so the pages under test load their
+            // actual front-end, then seed album content on top. The real wwwroot
+            // has no albums/ of its own, so nothing collides with the seed below.
+            if (Directory.Exists(sourceWebRoot))
+            {
+                CopyDirectory(sourceWebRoot, webRoot);
+            }
+
             var albums = Path.Combine(webRoot, "albums");
             var album = Path.Combine(albums, SampleAlbumSlug);
             Directory.CreateDirectory(Path.Combine(album, "thumbnail"));
@@ -139,6 +148,16 @@ namespace GlaaTrips.UITests
             var saltBytes = Encoding.UTF8.GetBytes(salt);
             var hash = Rfc2898DeriveBytes.Pbkdf2(password, saltBytes, 600_000, HashAlgorithmName.SHA256, 256 / 8);
             return Convert.ToHexString(hash);
+        }
+
+        private static void CopyDirectory(string source, string destination)
+        {
+            foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+            {
+                var target = Path.Combine(destination, Path.GetRelativePath(source, file));
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                File.Copy(file, target, overwrite: true);
+            }
         }
 
         private static int GetFreePort()

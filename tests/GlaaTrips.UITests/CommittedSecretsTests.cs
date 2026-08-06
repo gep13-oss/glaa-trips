@@ -4,10 +4,9 @@ namespace GlaaTrips.UITests
 {
     /// <summary>
     /// Guards against a secret leaking back into the rendered public page. The
-    /// Google Maps API key used to be hardcoded in <c>Index.cshtml</c>; it now
-    /// comes from configuration and the map script is only emitted when a key is
-    /// set. The test server configures no key, so the home page must contain no
-    /// Google API key at all.
+    /// Google Maps API key used to be hardcoded in <c>Index.cshtml</c>. The map is
+    /// now Leaflet + OpenStreetMap, which needs no key, so the home page must
+    /// contain no Google API key at all — this test keeps it from creeping back.
     /// </summary>
     [TestFixture]
     public class CommittedSecretsTests : PageTest
