@@ -39,4 +39,13 @@
             }
         }, false);
     }
+
+    // Delete photo from the album grid (one small form per thumbnail)
+    document.querySelectorAll(".thumb__delete").forEach((deleteForm) => {
+        deleteForm.addEventListener("submit", (e) => {
+            if (!confirm("Are you sure you want to delete this photo?")) {
+                e.preventDefault();
+            }
+        });
+    });
 })();

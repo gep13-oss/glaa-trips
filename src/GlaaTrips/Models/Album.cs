@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -43,6 +44,28 @@ namespace GlaaTrips.Models
         public double Latitude { get; }
 
         public double Longitude { get; }
+
+        /// <summary>
+        /// Gets the album's location formatted as a map reference for display, e.g.
+        /// <c>57.42°N 1.86°W</c>. Latitude and longitude are shown as absolute
+        /// values with a hemisphere letter, always in the invariant culture so the
+        /// decimal point is stable regardless of the server's locale.
+        /// </summary>
+        public string Coordinates
+        {
+            get
+            {
+                string ns = Latitude >= 0 ? "N" : "S";
+                string ew = Longitude >= 0 ? "E" : "W";
+                return string.Format(
+                    CultureInfo.InvariantCulture,
+                    "{0:0.00}°{1} {2:0.00}°{3}",
+                    Math.Abs(Latitude),
+                    ns,
+                    Math.Abs(Longitude),
+                    ew);
+            }
+        }
 
         public string UrlName
         {

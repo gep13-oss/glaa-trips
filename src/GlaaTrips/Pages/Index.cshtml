@@ -4,55 +4,100 @@
     ViewData["Title"] = "Albums";
     ViewData["Description"] = $"An online gallery where I share my photos with the world. Currently showing {ac.Albums.Count} albums ({string.Join(", ", ac.Albums.Select(a => a.Id))})";
     ViewData["Image"] = Request.Scheme + "://" + Request.Host + ac.Albums.FirstOrDefault()?.CoverPhoto?.GetThumbnailLink((int)ImageType.Full, out int h);
+
+    bool signedIn = User.Identity != null && User.Identity.IsAuthenticated;
 }
 
-<form id="admin" if-authorized method="post" action="~/album/new/create/">
-    <input type="text" name="name" id="name" aria-label="Album name" placeholder="Album name" required />
-    <input type="text" name="description" id="description" aria-label="Album description" placeholder="Album description" />
-    <input type="text" name="visited" id="visited" aria-label="Date of visit" placeholder="Date of visit" />
-    <input type="text" name="latitude" id="latitude" aria-label="Album latitude" placeholder="Album latitude" />
-    <input type="text" name="longitude" id="longitude" aria-label="Album longitude" placeholder="Album longitude" />
-    <input type="submit" id="newalbum" data-progress="Creating..." value="New album">
+<form id="admin" class="trip-form" if-authorized method="post" action="~/album/new/create/">
+    <h2 class="trip-form__title">New trip</h2>
+
+    <div class="field field--place">
+        <label for="name">Place</label>
+        <input type="text" name="name" id="name" required placeholder="e.g. New Slains Castle" />
+    </div>
+    <div class="field field--notes">
+        <label for="description">Notes</label>
+        <input type="text" name="description" id="description" placeholder="A line about the trip" />
+    </div>
+    <div class="field field--date">
+        <label for="visited">Date visited</label>
+        <input type="date" name="visited" id="visited" />
+    </div>
+    <div class="field field--lat">
+        <label for="latitude">Latitude</label>
+        <input type="number" step="any" name="latitude" id="latitude" placeholder="57.4183" />
+    </div>
+    <div class="field field--long">
+        <label for="longitude">Longitude</label>
+        <input type="number" step="any" name="longitude" id="longitude" placeholder="-1.8618" />
+    </div>
+    <div class="field field--actions">
+        <input type="submit" id="newalbum" class="btn btn--primary" value="Add trip" data-progress="Creating…" />
+    </div>
 </form>
+
+<section class="map-hero">
+    <div id="map"></div>
+</section>
 
 @if (ac.Albums.Count == 0)
 {
-    <p>There are no albums yet. <a asp-page="Login">Sign in</a> to create new albums and upload photos.</p>
-}
-
-<!-- The div element for the Leaflet map -->
-<div id="map"></div>
-
-<h2>Albums</h2>
-
-<div class="albumlist pic">
-    @{
-        foreach (Album album in ac.Albums)
+    <p class="empty">
+        @if (signedIn)
         {
-            var photo = album.CoverPhoto;
-            if (photo != null)
-            {
-                <a href="/album/@album.UrlName/" data-text="@album.DisplayName (@album.Photos.Count)">
-                    <img photo="@photo" type="Thumbnail" />
-                </a>
-            }
-            else
-            {
-                <a href="/album/@album.UrlName/" data-text="@album.DisplayName">
-
-                </a>
-            }
+            <text>No trips yet — add your first with the form above.</text>
         }
-    }
-</div>
+        else
+        {
+            <text>No trips have been shared yet.</text>
+        }
+    </p>
+}
+else
+{
+    <section class="trips">
+        <div class="section-head">
+            <h2 class="section-head__title">Trips</h2>
+            <span class="section-head__count">@ac.Albums.Count place@(ac.Albums.Count == 1 ? "" : "s")</span>
+        </div>
+
+        <div class="trip-grid">
+            @foreach (Album album in ac.Albums)
+            {
+                var cover = album.CoverPhoto;
+                <a class="trip-card" href="/album/@album.UrlName/">
+                    <div class="trip-card__media">
+                        @if (cover != null)
+                        {
+                            <img photo="@cover" type="Cover" />
+                        }
+                        else
+                        {
+                            <div class="trip-card__placeholder"></div>
+                        }
+                    </div>
+                    <div class="trip-card__body">
+                        <h3 class="trip-card__title">@album.DisplayName</h3>
+                        <p class="trip-card__dossier">
+                            <span class="coord">@album.Coordinates</span>
+                            <span class="sep">·</span>
+                            <span class="date">@album.Visited.ToString("MMM yyyy").ToUpperInvariant()</span>
+                            <span class="sep">·</span>
+                            <span class="count">@album.Photos.Count photo@(album.Photos.Count == 1 ? "" : "s")</span>
+                        </p>
+                    </div>
+                </a>
+            }
+        </div>
+    </section>
+}
 
 @section head {
     <link rel="stylesheet" href="/lib/leaflet/leaflet.css" />
-    <link if-authorized rel="stylesheet" href="/css/admin.css" />
 }
 
 @section scripts {
     <script src="/lib/leaflet/leaflet.js"></script>
-    <script src="/js/map.js"></script>
-    <script if-authorized src="/js/admin.js" async></script>
+    <script src="~/js/map.js" asp-append-version="true"></script>
+    <script if-authorized src="~/js/admin.js" async asp-append-version="true"></script>
 }

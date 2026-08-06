@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" itemscope itemtype="http://schema.org/WebPage">
 <head prefix="og: http://ogp.me/ns#">
     <meta charset="utf-8" />
@@ -6,7 +6,7 @@
     <meta name="description" content="@ViewData["Description"]" />
     <meta name="keywords" content="@ViewData["Title"], photo, picture, gallery, images" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="/css/site.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @RenderSection("head", required: false)
     <meta name="application-name" content="@ViewData["Title"]" />
     <meta property="og:type" content="website" />
@@ -18,29 +18,29 @@
     <link rel="apple-touch-icon" href="~/img/icon180x180.png" sizes="180x180" />
 </head>
 <body>
-    <div itemscope itemtype="http://schema.org/BreadcrumbList" itemprop="breadcrumb">
-        <header>
-            <div class="container" itemscope itemprop="itemListElement" itemtype="http://schema.org/ListItem">
-                <h1>
-                    <a href="~/" title="Back to the home page" itemscope itemtype="http://schema.org/Thing" itemprop="item">
-                        <span itemprop="name">GLAA Trips</span>
-                    </a>
-                </h1>
-                <meta itemprop="position" content="1" />
-                @{await Html.RenderPartialAsync("_LoginButton.cshtml", ViewData["Title"]);}
-            </div>
-        </header>
+    <header class="site-header">
+        <div class="container">
+            <a class="wordmark" href="~/" title="Back to the home page" itemprop="name">
+                <span class="wordmark__pin" aria-hidden="true"></span>GLAA Trips
+            </a>
+            @{await Html.RenderPartialAsync("_LoginButton.cshtml", ViewData["Title"]);}
+        </div>
+    </header>
 
-        <main class="container">
-            @RenderBody()
-            @{await Html.RenderPartialAsync("_SocialButtons.cshtml", ViewData["Title"]);}
-        </main>
-    </div>
+    <main class="container site-main">
+        @RenderBody()
+    </main>
 
-    <script src="/js/site.js"></script>
+    <footer class="site-footer">
+        <div class="container">
+            <span class="site-footer__mark">GLAA Trips</span>
+            <span class="site-footer__note">A family travel journal</span>
+        </div>
+        <meta itemprop="description" content="@ViewData["Description"]" />
+        <meta itemprop="image" content="@ViewData["Image"]" />
+    </footer>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @RenderSection("scripts", required: false)
-
-    <meta itemprop="description" content="@ViewData["Description"]" />
-    <meta itemprop="image" content="@ViewData["Image"]" />
 </body>
 </html>

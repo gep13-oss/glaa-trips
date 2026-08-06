@@ -19,12 +19,11 @@ namespace GlaaTrips.UITests
 
             await Expect(Page).ToHaveTitleAsync(new Regex("GLAA Trips"));
 
-            // The home page lists one anchor per album. (A photo-less album renders
-            // an empty, zero-height tile, so assert presence + title rather than
-            // visibility — cover-image rendering is covered by the gallery step.)
+            // The home page lists one trip card per album, each linking to the
+            // album and showing its place name.
             var albumLink = Page.Locator($"a[href='/album/{ServerFixture.SampleAlbumSlug}/']");
             await Expect(albumLink).ToHaveCountAsync(1);
-            await Expect(albumLink).ToHaveAttributeAsync("data-text", new Regex(ServerFixture.SampleAlbumTitle));
+            await Expect(albumLink).ToContainTextAsync(ServerFixture.SampleAlbumTitle);
         }
 
         [Test]

@@ -19,7 +19,7 @@ namespace GlaaTrips.UITests
     public sealed class ServerFixture
     {
         private static Process? _app;
-        private static string? _tempWebRoot;
+        private static string? _tempContentRoot;
 
         public static string BaseUrl { get; private set; } = string.Empty;
 
@@ -42,8 +42,15 @@ namespace GlaaTrips.UITests
             var webProject = FindWebProject();
             var webDir = Path.GetDirectoryName(webProject)!;
 
-            _tempWebRoot = Path.Combine(Path.GetTempPath(), "glaa-trips-tests-" + Guid.NewGuid().ToString("N"));
-            SeedWebRoot(_tempWebRoot, Path.Combine(webDir, "wwwroot"));
+            // Run the app against a fully isolated content root: its web root is
+            // {contentRoot}/wwwroot, seeded below. Pointing --webroot at a directory
+            // outside the content root does NOT reliably redirect static-file
+            // serving under WebApplication (the file provider and WebRootPath can
+            // diverge), so the app would otherwise serve the developer's real
+            // src/GlaaTrips/wwwroot/albums instead of the seed. Isolating the whole
+            // content root avoids that entirely.
+            _tempContentRoot = Path.Combine(Path.GetTempPath(), "glaa-trips-tests-" + Guid.NewGuid().ToString("N"));
+            SeedWebRoot(Path.Combine(_tempContentRoot, "wwwroot"), Path.Combine(webDir, "wwwroot"));
 
             var port = GetFreePort();
             BaseUrl = $"http://127.0.0.1:{port}";
@@ -61,9 +68,15 @@ namespace GlaaTrips.UITests
             psi.ArgumentList.Add(webProject);
             psi.ArgumentList.Add("-c");
             psi.ArgumentList.Add("Release");
+
+            // Skip launchSettings.json: its profile forces ASPNETCORE_ENVIRONMENT
+            // to Development, which turns on static web assets — those serve static
+            // files (including albums/markers.json) from the source project wwwroot
+            // via the build manifest, overriding the seeded web root. Running in
+            // Production keeps static serving pointed at the isolated web root.
+            psi.ArgumentList.Add("--no-launch-profile");
             psi.ArgumentList.Add("--");
-            psi.ArgumentList.Add($"--contentRoot={webDir}");
-            psi.ArgumentList.Add($"--webroot={_tempWebRoot}");
+            psi.ArgumentList.Add($"--contentRoot={_tempContentRoot}");
             psi.ArgumentList.Add($"--urls={BaseUrl}");
             psi.ArgumentList.Add("--forcessl=false");
             psi.ArgumentList.Add($"--user:username={TestUsername}");
@@ -100,9 +113,9 @@ namespace GlaaTrips.UITests
 
             try
             {
-                if (_tempWebRoot is not null && Directory.Exists(_tempWebRoot))
+                if (_tempContentRoot is not null && Directory.Exists(_tempContentRoot))
                 {
-                    Directory.Delete(_tempWebRoot, recursive: true);
+                    Directory.Delete(_tempContentRoot, recursive: true);
                 }
             }
             catch
@@ -112,13 +125,15 @@ namespace GlaaTrips.UITests
 
         private static void SeedWebRoot(string webRoot, string sourceWebRoot)
         {
-            // Start from the app's real static assets (css/js/img and the
-            // LibMan-restored lib/leaflet) so the pages under test load their
-            // actual front-end, then seed album content on top. The real wwwroot
-            // has no albums/ of its own, so nothing collides with the seed below.
+            // Start from the app's real static assets (css/js/img/fonts and the
+            // LibMan-restored lib/) so the pages under test load their actual
+            // front-end, then seed album content on top. The real wwwroot's own
+            // albums/ is skipped so the suite stays hermetic regardless of any
+            // album a developer created locally — the seed below is the only
+            // album content the tests see.
             if (Directory.Exists(sourceWebRoot))
             {
-                CopyDirectory(sourceWebRoot, webRoot);
+                CopyDirectory(sourceWebRoot, webRoot, excludeTopLevelDir: "albums");
             }
 
             var albums = Path.Combine(webRoot, "albums");
@@ -150,11 +165,22 @@ namespace GlaaTrips.UITests
             return Convert.ToHexString(hash);
         }
 
-        private static void CopyDirectory(string source, string destination)
+        private static void CopyDirectory(string source, string destination, string? excludeTopLevelDir = null)
         {
+            var excludePrefix = excludeTopLevelDir is null
+                ? null
+                : excludeTopLevelDir + Path.DirectorySeparatorChar;
+
             foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
             {
-                var target = Path.Combine(destination, Path.GetRelativePath(source, file));
+                var relative = Path.GetRelativePath(source, file);
+
+                if (excludePrefix is not null && relative.StartsWith(excludePrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var target = Path.Combine(destination, relative);
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 File.Copy(file, target, overwrite: true);
             }
