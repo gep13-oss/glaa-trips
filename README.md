@@ -136,7 +136,10 @@ referenced from app settings.)
 ### 3. Set up the secretless deploy identity (OIDC)
 
 Create an identity GitHub Actions can use, let it deploy the web app, and trust
-this repository's `main` branch.
+this repository. The workflow's deploy job runs in the `production`
+**environment**, so the federated credential's subject must be scoped to that
+environment (`…:environment:production`) — not the branch — or `azure/login`
+fails with *"No matching federated identity record"*.
 
 ```powershell
 $SUBSCRIPTION = az account show --query id -o tsv
@@ -148,13 +151,13 @@ az ad sp create --id $APP_ID
 az role assignment create --assignee $APP_ID --role "Contributor" `
   --scope "/subscriptions/$SUBSCRIPTION/resourceGroups/$RG/providers/Microsoft.Web/sites/$APP"
 
-# Trust GitHub Actions from this repo's main branch. Write the JSON to a file to
-# avoid shell-quoting issues, then point az at it. Replace <owner>/<repo>.
+# Trust GitHub Actions from this repo's "production" environment. Write the JSON
+# to a file to avoid shell-quoting issues. Replace <owner>/<repo>.
 @'
 {
-  "name": "github-main",
+  "name": "github-production",
   "issuer": "https://token.actions.githubusercontent.com",
-  "subject": "repo:<owner>/<repo>:ref:refs/heads/main",
+  "subject": "repo:<owner>/<repo>:environment:production",
   "audiences": ["api://AzureADTokenExchange"]
 }
 '@ | Set-Content -Path federated-credential.json

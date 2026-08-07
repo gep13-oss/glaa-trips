@@ -83,5 +83,31 @@ namespace GlaaTrips.UITests
             await Expect(Page.Locator($"a[href='/photo/{ServerFixture.SampleAlbumSlug}/bad-shot/']"))
                 .ToHaveCountAsync(0);
         }
+
+        [Test]
+        public async Task An_upload_larger_than_the_default_request_limit_is_accepted()
+        {
+            await SignInAsync();
+            await Page.GotoAsync($"{BaseUrl}/album/{ServerFixture.SampleAlbumSlug}/");
+
+            // ~31 MB — above Kestrel's 30 MB default request-body limit, which a
+            // batch of phone photos easily exceeds. The bytes are not a real image
+            // so the file is skipped; the point is the request is ACCEPTED (the
+            // handler runs and redirects) rather than rejected 400 for a body that
+            // is too large to even read (which was the production failure).
+            var oversize = new byte[31 * 1024 * 1024];
+
+            await Page.SetInputFilesAsync("#files", new FilePayload
+            {
+                Name = "oversize.png",
+                MimeType = "image/png",
+                Buffer = oversize,
+            });
+            await Page.ClickAsync("#btnfiles");
+
+            await Page.WaitForURLAsync(new Regex($"/album/{ServerFixture.SampleAlbumSlug}/$"));
+            await Expect(Page.Locator($"a[href='/photo/{ServerFixture.SampleAlbumSlug}/oversize/']"))
+                .ToHaveCountAsync(0);
+        }
     }
 }

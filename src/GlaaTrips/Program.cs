@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +17,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ---- Services (was Startup.ConfigureServices) ----
 builder.Services.AddRazorPages();
+
+// Photos (especially from phones) are several MB each, so a batch upload easily
+// exceeds Kestrel's 30 MB default request-body limit — which surfaces as an
+// antiforgery failure / 400 because the oversized body can't be read. Raise it
+// for both Kestrel and multipart form parsing, configurable via
+// Upload:MaxRequestBodyBytes. The whole site is behind authentication, so only a
+// signed-in user can post a large body.
+long maxUploadBytes = builder.Configuration.GetValue<long?>("Upload:MaxRequestBodyBytes") ?? 104_857_600L;
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = maxUploadBytes);
+builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = maxUploadBytes);
 
 // Album content (photos, thumbnails, metadata, markers) is read and written
 // through an IPhotoStore, selected by configuration ("Storage:Provider"). The
