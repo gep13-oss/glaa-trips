@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # The workflow pins each action to a full commit SHA (immutable, so a moved
+  # tag can't swap in malicious code). Dependabot keeps those pins current: when
+  # an action publishes a new release it opens a PR bumping the SHA and its
+  # version comment.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
