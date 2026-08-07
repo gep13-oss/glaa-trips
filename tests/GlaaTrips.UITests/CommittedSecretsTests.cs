@@ -1,20 +1,21 @@
-using Microsoft.Playwright.NUnit;
-
 namespace GlaaTrips.UITests
 {
     /// <summary>
-    /// Guards against a secret leaking back into the rendered public page. The
-    /// Google Maps API key used to be hardcoded in <c>Index.cshtml</c>. The map is
-    /// now Leaflet + OpenStreetMap, which needs no key, so the home page must
-    /// contain no Google API key at all — this test keeps it from creeping back.
+    /// Guards against a secret leaking back into the rendered page. The Google
+    /// Maps API key used to be hardcoded in <c>Index.cshtml</c>. The map is now
+    /// Leaflet + OpenStreetMap, which needs no key, so the home page must contain
+    /// no Google API key at all — this test keeps it from creeping back. The home
+    /// page now requires authentication, so it signs in first.
     /// </summary>
     [TestFixture]
-    public class CommittedSecretsTests : PageTest
+    public class CommittedSecretsTests : UITestBase
     {
         [Test]
         public async Task Home_page_does_not_leak_a_google_maps_api_key()
         {
-            var response = await Page.APIRequest.GetAsync(ServerFixture.BaseUrl + "/");
+            await SignInAsync();
+
+            var response = await Page.APIRequest.GetAsync(BaseUrl + "/");
             var body = await response.TextAsync();
 
             // "AIzaSy" is the fixed prefix of every Google API key; catching the

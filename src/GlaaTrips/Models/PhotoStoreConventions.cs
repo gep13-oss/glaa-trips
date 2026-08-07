@@ -41,15 +41,49 @@ namespace GlaaTrips.Models
         }
 
         /// <summary>
-        /// Encodes a single album id or file name for use in a served URL,
-        /// matching the site's long-standing convention of lower-casing and
-        /// percent-encoding spaces so links are stable and case-insensitive.
+        /// The root-relative base path the authenticated media endpoint is served
+        /// under. Album content is no longer a public static file; it is streamed
+        /// through this endpoint so it is only reachable by a signed-in user.
         /// </summary>
-        /// <param name="name">The raw album id or file name.</param>
-        /// <returns>The URL-safe segment.</returns>
-        public static string UrlSegment(string name)
+        public const string MediaBase = "/albums";
+
+        /// <summary>
+        /// Gets the URL an original photo is served from.
+        /// </summary>
+        /// <param name="albumId">The album containing the photo.</param>
+        /// <param name="fileName">The photo file name.</param>
+        /// <returns>The root-relative media URL.</returns>
+        public static string PhotoUrl(string albumId, string fileName)
         {
-            return name.Replace(" ", "%20").ToLowerInvariant();
+            return $"{MediaBase}/{Escape(albumId)}/{Escape(fileName)}";
+        }
+
+        /// <summary>
+        /// Gets the URL a thumbnail is served from.
+        /// </summary>
+        /// <param name="albumId">The album containing the thumbnail.</param>
+        /// <param name="thumbnailFileName">The thumbnail file name.</param>
+        /// <returns>The root-relative media URL.</returns>
+        public static string ThumbnailUrl(string albumId, string thumbnailFileName)
+        {
+            return $"{MediaBase}/{Escape(albumId)}/{ThumbnailFolder}/{Escape(thumbnailFileName)}";
+        }
+
+        /// <summary>
+        /// Gets the URL the map's marker file is served from.
+        /// </summary>
+        /// <returns>The root-relative media URL.</returns>
+        public static string MarkersUrl()
+        {
+            return $"{MediaBase}/{MarkersFileName}";
+        }
+
+        // Percent-encodes a single path segment (album id or file name) so it round
+        // trips through the media endpoint's catch-all route back to the exact
+        // store key. The separators between segments are added literally.
+        private static string Escape(string segment)
+        {
+            return Uri.EscapeDataString(segment);
         }
 
         /// <summary>

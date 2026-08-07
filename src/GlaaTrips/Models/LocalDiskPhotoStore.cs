@@ -17,7 +17,6 @@ namespace GlaaTrips.Models
     /// </summary>
     public sealed class LocalDiskPhotoStore : IPhotoStore
     {
-        private const string PublicBase = "/albums";
         private readonly string _root;
 
         /// <summary>
@@ -207,21 +206,48 @@ namespace GlaaTrips.Models
         }
 
         /// <inheritdoc />
+        public bool TryOpenContent(string key, out Stream content)
+        {
+            content = null;
+
+            // The key uses '/' separators; map it onto the albums root and confirm
+            // the resolved path stays inside it before opening anything.
+            string relative = key.Replace('/', Path.DirectorySeparatorChar);
+            string fullPath = Path.GetFullPath(Path.Combine(_root, relative));
+
+            string baseWithSeparator = Path.GetFullPath(_root).TrimEnd(Path.DirectorySeparatorChar)
+                + Path.DirectorySeparatorChar;
+
+            if (!fullPath.StartsWith(baseWithSeparator, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (!File.Exists(fullPath))
+            {
+                return false;
+            }
+
+            content = File.OpenRead(fullPath);
+            return true;
+        }
+
+        /// <inheritdoc />
         public string PhotoUrl(string albumId, string fileName)
         {
-            return $"{PublicBase}/{PhotoStoreConventions.UrlSegment(albumId)}/{PhotoStoreConventions.UrlSegment(fileName)}";
+            return PhotoStoreConventions.PhotoUrl(albumId, fileName);
         }
 
         /// <inheritdoc />
         public string ThumbnailUrl(string albumId, string thumbnailFileName)
         {
-            return $"{PublicBase}/{PhotoStoreConventions.UrlSegment(albumId)}/{PhotoStoreConventions.ThumbnailFolder}/{PhotoStoreConventions.UrlSegment(thumbnailFileName)}";
+            return PhotoStoreConventions.ThumbnailUrl(albumId, thumbnailFileName);
         }
 
         /// <inheritdoc />
         public string MarkersUrl()
         {
-            return $"{PublicBase}/{PhotoStoreConventions.MarkersFileName}";
+            return PhotoStoreConventions.MarkersUrl();
         }
 
         private string AlbumDir(string albumId)

@@ -23,24 +23,21 @@ namespace GlaaTrips.Models
     public sealed class AzureBlobPhotoStore : IPhotoStore
     {
         private readonly BlobContainerClient _container;
-        private readonly string _publicBase;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AzureBlobPhotoStore"/>
-        /// class and ensures the backing container exists.
+        /// class and ensures the backing container exists. The container is
+        /// created private (no public access): content is only reachable by a
+        /// signed-in user through the app's authenticated media endpoint, never by
+        /// a direct blob URL.
         /// </summary>
         /// <param name="connectionString">The storage account connection string.</param>
         /// <param name="containerName">The container album content is stored in.</param>
-        /// <param name="publicBaseUrl">The public base URL content is served from (for example a CDN endpoint); when empty the container's own URL is used.</param>
-        public AzureBlobPhotoStore(string connectionString, string containerName, string publicBaseUrl)
+        public AzureBlobPhotoStore(string connectionString, string containerName)
         {
             var service = new BlobServiceClient(connectionString);
             _container = service.GetBlobContainerClient(containerName);
-            _container.CreateIfNotExists(PublicAccessType.Blob);
-
-            _publicBase = string.IsNullOrWhiteSpace(publicBaseUrl)
-                ? _container.Uri.ToString().TrimEnd('/')
-                : publicBaseUrl.TrimEnd('/');
+            _container.CreateIfNotExists(PublicAccessType.None);
         }
 
         /// <inheritdoc />
@@ -202,26 +199,37 @@ namespace GlaaTrips.Models
         }
 
         /// <inheritdoc />
+        public bool TryOpenContent(string key, out Stream content)
+        {
+            content = null;
+
+            var blob = _container.GetBlobClient(key);
+
+            if (!blob.Exists())
+            {
+                return false;
+            }
+
+            content = blob.OpenRead();
+            return true;
+        }
+
+        /// <inheritdoc />
         public string PhotoUrl(string albumId, string fileName)
         {
-            return $"{_publicBase}/{Escape(albumId)}/{Escape(fileName)}";
+            return PhotoStoreConventions.PhotoUrl(albumId, fileName);
         }
 
         /// <inheritdoc />
         public string ThumbnailUrl(string albumId, string thumbnailFileName)
         {
-            return $"{_publicBase}/{Escape(albumId)}/{PhotoStoreConventions.ThumbnailFolder}/{Escape(thumbnailFileName)}";
+            return PhotoStoreConventions.ThumbnailUrl(albumId, thumbnailFileName);
         }
 
         /// <inheritdoc />
         public string MarkersUrl()
         {
-            return $"{_publicBase}/{PhotoStoreConventions.MarkersFileName}";
-        }
-
-        private static string Escape(string segment)
-        {
-            return Uri.EscapeDataString(segment);
+            return PhotoStoreConventions.MarkersUrl();
         }
 
         private static string MetadataKey(string albumId)

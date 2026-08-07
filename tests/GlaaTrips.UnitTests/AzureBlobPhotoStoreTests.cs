@@ -39,7 +39,7 @@ namespace GlaaTrips.UnitTests
             }
 
             // A fresh container per test keeps the contract's fixed album id isolated.
-            return new AzureBlobPhotoStore(_connectionString!, "t" + Guid.NewGuid().ToString("N"), string.Empty);
+            return new AzureBlobPhotoStore(_connectionString!, "t" + Guid.NewGuid().ToString("N"));
         }
     }
 }

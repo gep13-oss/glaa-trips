@@ -5,12 +5,16 @@ using System.Threading.Tasks;
 using GlaaTrips.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
 
 namespace GlaaTrips.Pages
 {
+    // The rest of the site requires authentication (a global fallback policy);
+    // the login page is the one place that must stay reachable anonymously.
+    [AllowAnonymous]
     public class LoginModel : PageModel
     {
         private readonly IConfiguration _config;

@@ -50,7 +50,7 @@ namespace GlaaTrips.UITests
             // src/GlaaTrips/wwwroot/albums instead of the seed. Isolating the whole
             // content root avoids that entirely.
             _tempContentRoot = Path.Combine(Path.GetTempPath(), "glaa-trips-tests-" + Guid.NewGuid().ToString("N"));
-            SeedWebRoot(Path.Combine(_tempContentRoot, "wwwroot"), Path.Combine(webDir, "wwwroot"));
+            SeedContentRoot(_tempContentRoot, Path.Combine(webDir, "wwwroot"));
 
             var port = GetFreePort();
             BaseUrl = $"http://127.0.0.1:{port}";
@@ -123,20 +123,21 @@ namespace GlaaTrips.UITests
             }
         }
 
-        private static void SeedWebRoot(string webRoot, string sourceWebRoot)
+        private static void SeedContentRoot(string contentRoot, string sourceWebRoot)
         {
-            // Start from the app's real static assets (css/js/img/fonts and the
-            // LibMan-restored lib/) so the pages under test load their actual
-            // front-end, then seed album content on top. The real wwwroot's own
-            // albums/ is skipped so the suite stays hermetic regardless of any
-            // album a developer created locally — the seed below is the only
-            // album content the tests see.
+            // Copy the app's real static assets (css/js/img/fonts and the
+            // LibMan-restored lib/) into the temp web root so the pages under test
+            // load their actual front-end. Album content is NOT a static file any
+            // more: it lives under App_Data (outside the web root) and is served
+            // only through the authenticated media endpoint, so it is seeded there
+            // instead. The real wwwroot's own albums/ is skipped defensively.
+            string webRoot = Path.Combine(contentRoot, "wwwroot");
             if (Directory.Exists(sourceWebRoot))
             {
                 CopyDirectory(sourceWebRoot, webRoot, excludeTopLevelDir: "albums");
             }
 
-            var albums = Path.Combine(webRoot, "albums");
+            var albums = Path.Combine(contentRoot, "App_Data", "albums");
             var album = Path.Combine(albums, SampleAlbumSlug);
             Directory.CreateDirectory(Path.Combine(album, "thumbnail"));
 

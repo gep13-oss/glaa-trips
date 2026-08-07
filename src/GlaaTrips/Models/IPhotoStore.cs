@@ -130,11 +130,24 @@ namespace GlaaTrips.Models
         Task WriteMarkersAsync(IEnumerable<Marker> markers);
 
         /// <summary>
-        /// Gets the public URL an original photo is served from.
+        /// Opens stored content by its store key (for example
+        /// <c>{albumId}/{photo}</c>, <c>{albumId}/thumbnail/{thumb}</c> or
+        /// <c>markers.json</c>) so the authenticated media endpoint can stream it.
+        /// This is how photos, thumbnails and the marker file are served now that
+        /// they are private and no longer public static files.
+        /// </summary>
+        /// <param name="key">The store key of the content, using <c>/</c> separators.</param>
+        /// <param name="content">The readable stream when the method returns <c>true</c>; the caller disposes it.</param>
+        /// <returns><c>true</c> when the content exists and was opened.</returns>
+        bool TryOpenContent(string key, out Stream content);
+
+        /// <summary>
+        /// Gets the URL an original photo is served from (the authenticated media
+        /// endpoint).
         /// </summary>
         /// <param name="albumId">The album containing the photo.</param>
         /// <param name="fileName">The photo file name.</param>
-        /// <returns>The absolute-or-root-relative URL of the photo.</returns>
+        /// <returns>The root-relative URL of the photo.</returns>
         string PhotoUrl(string albumId, string fileName);
 
         /// <summary>

@@ -140,6 +140,23 @@ namespace GlaaTrips.UnitTests
         }
 
         [Test]
+        public async Task Content_opens_by_key_and_missing_content_reports_false()
+        {
+            var store = CreateStore();
+            var bytes = Encoding.UTF8.GetBytes("photo-bytes");
+            await store.SavePhotoAsync(Album, "beach.jpg", new MemoryStream(bytes));
+
+            bool opened = store.TryOpenContent($"{Album}/beach.jpg", out var content);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(opened, Is.True);
+                Assert.That(ReadAll(content), Is.EqualTo(bytes));
+                Assert.That(store.TryOpenContent($"{Album}/missing.jpg", out _), Is.False);
+            });
+        }
+
+        [Test]
         public async Task Writing_markers_succeeds_and_the_marker_url_is_set()
         {
             var store = CreateStore();

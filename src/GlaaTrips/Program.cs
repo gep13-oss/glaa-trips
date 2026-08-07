@@ -2,8 +2,10 @@ using System;
 using System.IO;
 using GlaaTrips.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,8 +20,10 @@ builder.Services.AddRazorPages();
 // Album content (photos, thumbnails, metadata, markers) is read and written
 // through an IPhotoStore, selected by configuration ("Storage:Provider"). The
 // default is the local disk store used in development and tests; production
-// selects the Azure Blob store so content survives redeploys and can be served
-// from a CDN.
+// selects the Azure Blob store so content survives redeploys. Content is never
+// a public static file — it is streamed through the authenticated /albums media
+// endpoint below — so the local store keeps its content outside the web root
+// and the Azure container is private.
 if (string.Equals(builder.Configuration["Storage:Provider"], "AzureBlob", StringComparison.OrdinalIgnoreCase))
 {
     builder.Services.AddSingleton<IPhotoStore>(sp =>
@@ -27,12 +31,10 @@ if (string.Equals(builder.Configuration["Storage:Provider"], "AzureBlob", String
         var configuration = sp.GetRequiredService<IConfiguration>();
         string connectionString = configuration["Storage:AzureBlob:ConnectionString"];
         string containerName = configuration["Storage:AzureBlob:ContainerName"];
-        string publicBaseUrl = configuration["Storage:AzureBlob:PublicBaseUrl"];
 
         return new AzureBlobPhotoStore(
             connectionString,
-            string.IsNullOrWhiteSpace(containerName) ? "albums" : containerName,
-            publicBaseUrl);
+            string.IsNullOrWhiteSpace(containerName) ? "albums" : containerName);
     });
 }
 else
@@ -40,8 +42,11 @@ else
     builder.Services.AddSingleton<IPhotoStore>(sp =>
     {
         var environment = sp.GetRequiredService<IWebHostEnvironment>();
-        string webRoot = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
-        string albumsRoot = Path.Combine(webRoot, "albums");
+
+        // Album content lives under the content root (App_Data), NOT the web root,
+        // so the static-file middleware never serves it: the only way to reach a
+        // photo is the authenticated media endpoint.
+        string albumsRoot = Path.Combine(environment.ContentRootPath, "App_Data", "albums");
         return new LocalDiskPhotoStore(albumsRoot);
     });
 }
@@ -60,6 +65,17 @@ builder.Services.AddAuthentication(options =>
     options.LoginPath = "/login";
     options.AccessDeniedPath = "/login";
     options.ReturnUrlParameter = "returnUrl";
+});
+
+// The whole site requires a signed-in user: a fallback policy applies to every
+// endpoint that does not opt out. Only the login page is marked [AllowAnonymous]
+// (and the static assets it needs are served before routing, so they stay
+// public). This is what gates the map, albums and photos behind login.
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
 });
 
 var app = builder.Build();
@@ -93,4 +109,33 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 
+// Authenticated media endpoint. Album photos, thumbnails and the marker file
+// are private (not static files); they are streamed from the photo store only
+// for a signed-in user. The catch-all key is the store key, e.g.
+// "sample-trip/beach.jpg" or "sample-trip/thumbnail/beach-190x127.jpg".
+app.MapGet("/albums/{**key}", (string key, IPhotoStore store, HttpContext http) =>
+{
+    if (string.IsNullOrEmpty(key) || !store.TryOpenContent(key, out var content))
+    {
+        return Results.NotFound();
+    }
+
+    http.Response.Headers[HeaderNames.CacheControl] = "private, max-age=86400";
+    return Results.Stream(content, ContentTypeForKey(key));
+}).RequireAuthorization();
+
 app.Run();
+
+static string ContentTypeForKey(string key)
+{
+    string extension = Path.GetExtension(key).ToLowerInvariant();
+    return extension switch
+    {
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".png" => "image/png",
+        ".gif" => "image/gif",
+        ".webp" => "image/webp",
+        ".json" => "application/json",
+        _ => "application/octet-stream",
+    };
+}

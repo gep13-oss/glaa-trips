@@ -1,21 +1,27 @@
 using System.Text.RegularExpressions;
 using Microsoft.Playwright;
-using Microsoft.Playwright.NUnit;
 
 namespace GlaaTrips.UITests
 {
     /// <summary>
-    /// Baseline coverage for the public (anonymous) site: viewing albums and the
-    /// map. These lock the read-side behaviour we intend to keep, so the later
-    /// refactors (security, data layer, gallery, map swap) have a safety net.
+    /// Baseline coverage for viewing the site as a signed-in visitor: the album
+    /// list, the map and an album page. The whole site now requires
+    /// authentication (see <see cref="AuthenticationRequiredTests"/> for the
+    /// anonymous-is-blocked behaviour), so each test signs in first.
     /// </summary>
     [TestFixture]
-    public class PublicSiteTests : PageTest
+    public class PublicSiteTests : UITestBase
     {
+        [SetUp]
+        public async Task SignIn()
+        {
+            await SignInAsync();
+        }
+
         [Test]
         public async Task Home_page_loads_and_lists_the_seeded_album()
         {
-            await Page.GotoAsync(ServerFixture.BaseUrl + "/");
+            await Page.GotoAsync(BaseUrl + "/");
 
             await Expect(Page).ToHaveTitleAsync(new Regex("GLAA Trips"));
 
@@ -29,14 +35,14 @@ namespace GlaaTrips.UITests
         [Test]
         public async Task Home_page_renders_the_map_container()
         {
-            await Page.GotoAsync(ServerFixture.BaseUrl + "/");
+            await Page.GotoAsync(BaseUrl + "/");
             await Expect(Page.Locator("#map")).ToBeVisibleAsync();
         }
 
         [Test]
-        public async Task Markers_json_is_served_with_the_album_marker()
+        public async Task Markers_json_is_served_to_a_signed_in_visitor()
         {
-            var response = await Page.APIRequest.GetAsync(ServerFixture.BaseUrl + "/albums/markers.json");
+            var response = await Page.APIRequest.GetAsync(BaseUrl + "/albums/markers.json");
 
             Assert.That(response.Ok, Is.True);
             var body = await response.TextAsync();
@@ -46,7 +52,7 @@ namespace GlaaTrips.UITests
         [Test]
         public async Task Album_page_shows_the_album_title()
         {
-            await Page.GotoAsync($"{ServerFixture.BaseUrl}/album/{ServerFixture.SampleAlbumSlug}/");
+            await Page.GotoAsync($"{BaseUrl}/album/{ServerFixture.SampleAlbumSlug}/");
 
             await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = ServerFixture.SampleAlbumTitle }))
                 .ToBeVisibleAsync();
@@ -55,7 +61,7 @@ namespace GlaaTrips.UITests
         [Test]
         public async Task Unknown_album_returns_not_found()
         {
-            var response = await Page.APIRequest.GetAsync($"{ServerFixture.BaseUrl}/album/does-not-exist/");
+            var response = await Page.APIRequest.GetAsync($"{BaseUrl}/album/does-not-exist/");
             Assert.That(response.Status, Is.EqualTo(404));
         }
     }
