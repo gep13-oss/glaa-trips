@@ -17,6 +17,12 @@ on:
   push:
     branches:
       - main
+  # Run the build/test job on PRs too (e.g. Dependabot updates) so a bad bump is
+  # caught before merge. The deploy job below is gated to non-PR events, so a PR
+  # never deploys.
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 env:
@@ -60,6 +66,8 @@ jobs:
 
   deploy:
     needs: build-test
+    # Only deploy on a push to main (or a manual run) — never for a pull request.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: production
