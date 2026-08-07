@@ -26,6 +26,11 @@ namespace GlaaTrips.UITests
         public const string TestUsername = "testuser";
         public const string TestPassword = "test-password-123";
         public const string TestSalt = "test-salt";
+
+        // A second, viewer-role account (the legacy "user" above is the admin), so
+        // the tests can exercise the viewer-can-look-but-not-manage behaviour.
+        public const string TestViewerUsername = "testviewer";
+        public const string TestViewerPassword = "viewer-password-123";
         public const string SampleAlbumSlug = "sample-trip";
         public const string SampleAlbumTitle = "Sample Trip";
 
@@ -82,6 +87,12 @@ namespace GlaaTrips.UITests
             psi.ArgumentList.Add($"--user:username={TestUsername}");
             psi.ArgumentList.Add($"--user:salt={TestSalt}");
             psi.ArgumentList.Add($"--user:password={passwordHash}");
+
+            // A viewer-role account under the Users section.
+            psi.ArgumentList.Add($"--Users:{TestViewerUsername}:salt={TestSalt}");
+            psi.ArgumentList.Add($"--Users:{TestViewerUsername}:password={HashPassword(TestViewerPassword, TestSalt)}");
+            psi.ArgumentList.Add($"--Users:{TestViewerUsername}:role=viewer");
+
             psi.Environment["ASPNETCORE_ENVIRONMENT"] = "Production";
 
             _app = Process.Start(psi)!;

@@ -1,3 +1,4 @@
+using GlaaTrips.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -22,16 +23,28 @@ namespace GlaaTrips.Pages
     public abstract class AdminHandlerPageModel : PageModel
     {
         /// <summary>
-        /// Guards an admin handler against unauthenticated access.
+        /// Guards an admin handler so only an administrator can run it. An
+        /// unauthenticated request is challenged (redirected to the login page); an
+        /// authenticated non-admin (a viewer) is forbidden.
         /// </summary>
         /// <returns>
-        /// A challenge result (which the cookie handler turns into a redirect to
-        /// the login page) when the current request is not authenticated;
-        /// otherwise <c>null</c> so the handler proceeds.
+        /// A challenge result when the request is not authenticated, a forbid result
+        /// when the user is authenticated but not an admin, or <c>null</c> so the
+        /// handler proceeds for an admin.
         /// </returns>
         protected IActionResult RequireAdmin()
         {
-            return User.Identity?.IsAuthenticated == true ? null : Challenge();
+            if (User.Identity?.IsAuthenticated != true)
+            {
+                return Challenge();
+            }
+
+            if (!User.IsInRole(Roles.Admin))
+            {
+                return Forbid();
+            }
+
+            return null;
         }
     }
 }

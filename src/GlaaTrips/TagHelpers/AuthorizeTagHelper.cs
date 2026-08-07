@@ -1,9 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using GlaaTrips.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 
 namespace GlaaTrips.TagHelpers
 {
+    // Renders the element only for an administrator. It marks the admin-only
+    // controls (create / edit / upload / delete / set-cover forms and admin.js);
+    // a viewer or an anonymous visitor never sees them. The sign-out link is not
+    // gated by this — it checks authentication directly so viewers can sign out.
     [HtmlTargetElement("*", Attributes = "if-authorized")]
     public class AuthorizeTagHelper : TagHelper
     {
@@ -16,7 +21,7 @@ namespace GlaaTrips.TagHelpers
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
-            if (!ViewContext.HttpContext.User.Identity.IsAuthenticated)
+            if (!ViewContext.HttpContext.User.IsInRole(Roles.Admin))
             {
                 output.SuppressOutput();
             }

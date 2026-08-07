@@ -53,6 +53,7 @@ else
 
 builder.Services.AddSingleton<AlbumCollection>();
 builder.Services.AddSingleton<ImageProcessor>();
+builder.Services.AddSingleton<UserAuthenticator>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -63,7 +64,10 @@ builder.Services.AddAuthentication(options =>
     // cookie handler would redirect to its default /Account/Login, which does
     // not exist here. The login page lives at /login and reads returnUrl.
     options.LoginPath = "/login";
-    options.AccessDeniedPath = "/login";
+
+    // A signed-in viewer who is denied an admin-only action is already past the
+    // login page, so send them home rather than back to /login.
+    options.AccessDeniedPath = "/";
     options.ReturnUrlParameter = "returnUrl";
 });
 

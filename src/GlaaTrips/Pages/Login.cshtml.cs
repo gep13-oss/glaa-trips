@@ -6,9 +6,7 @@ using GlaaTrips.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Configuration;
 
 namespace GlaaTrips.Pages
 {
@@ -17,11 +15,11 @@ namespace GlaaTrips.Pages
     [AllowAnonymous]
     public class LoginModel : PageModel
     {
-        private readonly IConfiguration _config;
+        private readonly UserAuthenticator _authenticator;
 
-        public LoginModel(IConfiguration config)
+        public LoginModel(UserAuthenticator authenticator)
         {
-            _config = config;
+            _authenticator = authenticator;
         }
 
         public async Task OnGet()
@@ -36,10 +34,11 @@ namespace GlaaTrips.Pages
 
         public async Task OnPost(string username, string password, string remember)
         {
-            if (username == _config["user:username"] && VerifyHashedPassword(password))
+            if (_authenticator.TryAuthenticate(username, password, out var role))
             {
                 var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
-                identity.AddClaim(new Claim(ClaimTypes.Name, _config["user:username"]));
+                identity.AddClaim(new Claim(ClaimTypes.Name, username));
+                identity.AddClaim(new Claim(ClaimTypes.Role, role));
 
                 var principle = new ClaimsPrincipal(identity);
                 var properties = new AuthenticationProperties { IsPersistent = remember == "on" };
@@ -110,11 +109,6 @@ namespace GlaaTrips.Pages
 
             localPath = path;
             return true;
-        }
-
-        private bool VerifyHashedPassword(string password)
-        {
-            return PasswordHasher.Verify(password, _config["user:salt"], _config["user:password"]);
         }
     }
 }

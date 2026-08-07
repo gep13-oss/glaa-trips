@@ -16,16 +16,37 @@ namespace GlaaTrips.UITests
         protected static string BaseUrl => ServerFixture.BaseUrl;
 
         /// <summary>
-        /// Signs in as the seeded test admin and waits for the redirect home. After
-        /// this the browser context holds the authenticated cookie, which the
-        /// context's <c>Page.APIRequest</c> shares.
+        /// Signs in as the seeded admin (the legacy <c>user</c> account) and waits
+        /// for the redirect home. After this the browser context holds the
+        /// authenticated cookie, which the context's <c>Page.APIRequest</c> shares.
         /// </summary>
         /// <returns>A task that completes once sign-in has landed on the home page.</returns>
-        protected async Task SignInAsync()
+        protected Task SignInAsync()
+        {
+            return SignInAsAsync(ServerFixture.TestUsername, ServerFixture.TestPassword);
+        }
+
+        /// <summary>
+        /// Signs in as the seeded viewer-role account, for tests that check a viewer
+        /// can browse but not manage content.
+        /// </summary>
+        /// <returns>A task that completes once sign-in has landed on the home page.</returns>
+        protected Task SignInAsViewerAsync()
+        {
+            return SignInAsAsync(ServerFixture.TestViewerUsername, ServerFixture.TestViewerPassword);
+        }
+
+        /// <summary>
+        /// Signs in as a specific user and waits for the redirect home.
+        /// </summary>
+        /// <param name="username">The username to sign in with.</param>
+        /// <param name="password">The password to sign in with.</param>
+        /// <returns>A task that completes once sign-in has landed on the home page.</returns>
+        protected async Task SignInAsAsync(string username, string password)
         {
             await Page.GotoAsync(BaseUrl + "/login");
-            await Page.FillAsync("#username", ServerFixture.TestUsername);
-            await Page.FillAsync("#password", ServerFixture.TestPassword);
+            await Page.FillAsync("#username", username);
+            await Page.FillAsync("#password", password);
             await Page.ClickAsync("input[type=submit]");
             await Page.WaitForURLAsync(BaseUrl + "/");
         }
