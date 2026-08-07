@@ -46,7 +46,7 @@ passwords be spotted and lets an attacker attack every account at once).
 
    Development (run from `src/GlaaTrips`):
 
-   ```bash
+   ```powershell
    dotnet user-secrets set "Users:alice:salt"     "<salt from step 1>"
    dotnet user-secrets set "Users:alice:password" "<hash from step 2>"
    dotnet user-secrets set "Users:alice:role"     "viewer"
@@ -75,25 +75,25 @@ app's disk, so it survives redeploys and restarts. A GitHub Actions workflow
 push to `main`, authenticating to Azure with **OIDC** (no publish profile or
 secret stored in GitHub).
 
-All `az` snippets below assume `az login` and a chosen subscription
-(`az account set --subscription <id>`).
+All `az` snippets below are PowerShell and assume `az login` and a chosen
+subscription (`az account set --subscription <id>`).
 
 ### 1. Provision the resources (one-time)
 
-```bash
+```powershell
 # Adjust the names/region. Storage account names must be globally unique and
 # 3–24 lowercase alphanumeric characters.
-RG=glaa-trips-rg
-LOCATION=uksouth
-PLAN=glaa-trips-plan
-APP=glaa-trips                 # must match AZURE_WEBAPP_NAME in the workflow
-STORAGE=glaatripsstore123
-CONTAINER=albums
+$RG = "glaa-trips-rg"
+$LOCATION = "ukwest"
+$PLAN = "glaa-trips-plan"
+$APP = "glaa-trips"                 # must match AZURE_WEBAPP_NAME in the workflow
+$STORAGE = "glaatripsstore123"
+$CONTAINER = "albums"
 
 az group create -n $RG -l $LOCATION
 
 # Storage account + a private container for album content
-az storage account create -n $STORAGE -g $RG -l $LOCATION \
+az storage account create -n $STORAGE -g $RG -l $LOCATION `
   --sku Standard_LRS --allow-blob-public-access false
 az storage container create --account-name $STORAGE -n $CONTAINER   # private
 
@@ -107,27 +107,27 @@ az webapp create -n $APP -g $RG -p $PLAN --runtime "DOTNETCORE:10.0"
 App settings use `__` (double underscore) in place of the `:` config
 separator. Do **not** set `ASPNETCORE_ENVIRONMENT=Development` in production.
 
-```bash
-CONN=$(az storage account show-connection-string -n $STORAGE -g $RG \
-  --query connectionString -o tsv)
+```powershell
+$CONN = az storage account show-connection-string -n $STORAGE -g $RG `
+  --query connectionString -o tsv
 
-az webapp config appsettings set -n $APP -g $RG --settings \
-  Storage__Provider=AzureBlob \
-  Storage__AzureBlob__ConnectionString="$CONN" \
-  Storage__AzureBlob__ContainerName=$CONTAINER \
-  forcessl=true
+az webapp config appsettings set -n $APP -g $RG --settings `
+  "Storage__Provider=AzureBlob" `
+  "Storage__AzureBlob__ConnectionString=$CONN" `
+  "Storage__AzureBlob__ContainerName=$CONTAINER" `
+  "forcessl=true"
 
 # The admin account (generate the salt + hash as in "Adding a user" above)
-az webapp config appsettings set -n $APP -g $RG --settings \
-  user__username="<admin-username>" \
-  user__salt="<unique random salt>" \
-  user__password="<PBKDF2 hash>"
+az webapp config appsettings set -n $APP -g $RG --settings `
+  "user__username=<admin-username>" `
+  "user__salt=<unique random salt>" `
+  "user__password=<PBKDF2 hash>"
 
 # Any additional viewer/admin accounts, same shape as user-secrets:
-az webapp config appsettings set -n $APP -g $RG --settings \
-  Users__alice__salt="<unique random salt>" \
-  Users__alice__password="<PBKDF2 hash>" \
-  Users__alice__role="viewer"
+az webapp config appsettings set -n $APP -g $RG --settings `
+  "Users__alice__salt=<unique random salt>" `
+  "Users__alice__password=<PBKDF2 hash>" `
+  "Users__alice__role=viewer"
 ```
 
 (For extra safety the connection string and hashes can live in Key Vault and be
@@ -138,22 +138,28 @@ referenced from app settings.)
 Create an identity GitHub Actions can use, let it deploy the web app, and trust
 this repository's `main` branch.
 
-```bash
-SUBSCRIPTION=$(az account show --query id -o tsv)
-TENANT=$(az account show --query tenantId -o tsv)
+```powershell
+$SUBSCRIPTION = az account show --query id -o tsv
+$TENANT = az account show --query tenantId -o tsv
 
-APP_ID=$(az ad app create --display-name "glaa-trips-deploy" --query appId -o tsv)
+$APP_ID = az ad app create --display-name "glaa-trips-deploy" --query appId -o tsv
 az ad sp create --id $APP_ID
 
-az role assignment create --assignee $APP_ID --role "Contributor" \
+az role assignment create --assignee $APP_ID --role "Contributor" `
   --scope "/subscriptions/$SUBSCRIPTION/resourceGroups/$RG/providers/Microsoft.Web/sites/$APP"
 
-az ad app federated-credential create --id $APP_ID --parameters '{
+# Trust GitHub Actions from this repo's main branch. Write the JSON to a file to
+# avoid shell-quoting issues, then point az at it. Replace <owner>/<repo>.
+@'
+{
   "name": "github-main",
   "issuer": "https://token.actions.githubusercontent.com",
   "subject": "repo:<owner>/<repo>:ref:refs/heads/main",
   "audiences": ["api://AzureADTokenExchange"]
-}'
+}
+'@ | Set-Content -Path federated-credential.json
+
+az ad app federated-credential create --id $APP_ID --parameters federated-credential.json
 ```
 
 Then add three **repository secrets** (Settings → Secrets and variables →
