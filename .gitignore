@@ -238,6 +238,19 @@ orleans.codegen.cs
 # (https://github.com/github/gitignore/pull/1529#issuecomment-104372622)
 #bower_components/
 
+# Client-side libraries restored by LibMan (libman.json) — not committed.
+# (**/ so it matches src/GlaaTrips/wwwroot/lib, not just a root-level wwwroot.)
+**/wwwroot/lib/
+
+# Runtime album content: originals, generated thumbnails, data.json and the
+# derived markers.json, all created through the admin UI. It is user data (and
+# this is a public repo), not source, and the app recreates the folder on
+# startup — so keep it out of git and back the photos up separately. It now
+# lives under App_Data (outside the web root) so it is never served as a public
+# static file; the older wwwroot/albums path is kept ignored too, defensively.
+**/App_Data/
+**/wwwroot/albums/
+
 # RIA/Silverlight projects
 Generated_Code/
 

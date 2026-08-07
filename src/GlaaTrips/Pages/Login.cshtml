@@ -1,0 +1,31 @@
+@page "{mode?}"
+@model LoginModel
+@{
+    ViewData["Title"] = "Login";
+    ViewData["Description"] = $"Sign in to the website";
+    ViewData["Image"] = "";
+    var referrer = Request.Headers["Referer"];
+}
+
+<form method="post" id="login" aria-labelledby="legend">
+    <fieldset>
+        <legend id="legend">Sign in</legend>
+
+        <div class="field">
+            <label for="username">Username</label>
+            <input type="text" name="username" id="username" autofocus required />
+        </div>
+
+        <div class="field">
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" required />
+        </div>
+
+        <label class="remember">
+            <input type="checkbox" name="remember" id="remember" /> Remember me
+        </label>
+
+        <input type="submit" class="btn btn--primary" value="Sign in" />
+        <input type="hidden" name="referrer" value="@referrer" />
+    </fieldset>
+</form>

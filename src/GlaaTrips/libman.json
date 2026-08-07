@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "leaflet@1.9.4",
+      "destination": "wwwroot/lib/leaflet/",
+      "files": [
+        "leaflet.js",
+        "leaflet.js.map",
+        "leaflet.css",
+        "images/marker-icon.png",
+        "images/marker-icon-2x.png",
+        "images/marker-shadow.png",
+        "images/layers.png",
+        "images/layers-2x.png"
+      ]
+    },
+    {
+      "library": "photoswipe@5.4.4",
+      "destination": "wwwroot/lib/photoswipe/",
+      "files": [
+        "photoswipe.esm.min.js",
+        "photoswipe-lightbox.esm.min.js",
+        "photoswipe.css"
+      ]
+    }
+  ]
+}

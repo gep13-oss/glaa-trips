@@ -1,0 +1,819 @@
+/* ==========================================================================
+   GLAA Trips — "Field guide" design system
+   A family travel journal: the map is the hero, and each trip is an entry
+   labelled with the real data the app stores (place, coordinates, date).
+   Quiet ink + petrol-teal chrome so the family photos carry the colour.
+   ========================================================================== */
+
+@font-face {
+    font-family: "Bricolage Grotesque";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("/fonts/bricolage-grotesque-500.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Bricolage Grotesque";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("/fonts/bricolage-grotesque-700.woff2") format("woff2");
+}
+
+:root {
+    --paper: #f3f2ec;
+    --surface: #fcfbf7;
+    --ink: #15272c;
+    --muted: #586a70;
+    --line: #dcd9ce;
+    --accent: #0e6e78;
+    --accent-deep: #0a555d;
+    --accent-tint: #e5efee;
+    --header-bg: #15272c;
+
+    --shadow-sm: 0 1px 2px rgba(21, 39, 44, .06), 0 3px 10px rgba(21, 39, 44, .05);
+    --shadow-md: 0 6px 16px rgba(21, 39, 44, .09), 0 18px 40px rgba(21, 39, 44, .08);
+
+    --radius: 12px;
+    --radius-sm: 7px;
+
+    --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Code", "SFMono-Regular", "Consolas", "Liberation Mono", Menlo, monospace;
+
+    --maxw: 1080px;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+}
+
+body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+a {
+    color: var(--accent);
+    text-underline-offset: 2px;
+}
+
+img {
+    border: none;
+    max-width: 100%;
+}
+
+.container {
+    width: 100%;
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ---- Header ------------------------------------------------------------- */
+
+.site-header {
+    background: var(--header-bg);
+    color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 500;
+}
+
+.site-header .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 66px;
+}
+
+.wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: .55ch;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.45rem;
+    letter-spacing: -.015em;
+    color: #fff;
+    text-decoration: none;
+}
+
+.wordmark__pin {
+    width: .62em;
+    height: .62em;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px rgba(14, 110, 120, .3);
+}
+
+.site-header a:not(.wordmark) {
+    color: #cfe3e3;
+    font: 600 .82rem/1 var(--font-mono);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: .5em .1em;
+}
+
+.site-header a:not(.wordmark):hover {
+    color: #fff;
+}
+
+/* ---- Footer ------------------------------------------------------------- */
+
+.site-footer {
+    border-top: 1px solid var(--line);
+    margin-top: 4rem;
+    padding: 1.6rem 0 2.4rem;
+}
+
+.site-footer .container {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.site-footer__mark {
+    font-family: var(--font-display);
+    font-weight: 700;
+}
+
+.site-footer__note {
+    font: .74rem/1 var(--font-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.site-main {
+    padding-top: 1.75rem;
+}
+
+/* ---- Buttons ------------------------------------------------------------ */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5ch;
+    font: 600 .95rem/1 var(--font-body);
+    padding: .72em 1.15em;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+}
+
+.btn--primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn--primary:hover {
+    background: var(--accent-deep);
+}
+
+.btn--ghost {
+    background: transparent;
+    border-color: var(--line);
+    color: var(--ink);
+}
+
+.btn--ghost:hover {
+    border-color: var(--muted);
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+.btn:disabled,
+.btn[disabled] {
+    opacity: .6;
+    cursor: progress;
+}
+
+/* ---- Fields ------------------------------------------------------------- */
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: .38rem;
+    min-width: 0;
+}
+
+.field > label {
+    font: 600 .68rem/1 var(--font-mono);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.field input {
+    font: 1rem/1.4 var(--font-body);
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: .58em .7em;
+    width: 100%;
+}
+
+.field input::placeholder {
+    color: #9aa4a1;
+}
+
+.field input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+}
+
+/* ---- Admin: "New trip" / edit panel ------------------------------------- */
+
+#admin {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 1.15rem 1.25rem 1.3rem;
+    margin: 0 0 1.75rem;
+}
+
+.trip-form {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: .95rem 1rem;
+    align-items: end;
+}
+
+.trip-form__title {
+    grid-column: 1 / -1;
+    margin: 0;
+    font: 700 1.1rem/1 var(--font-display);
+    letter-spacing: -.01em;
+}
+
+.trip-form .field--place {
+    grid-column: span 3;
+}
+
+.trip-form .field--notes {
+    grid-column: span 3;
+}
+
+.trip-form .field--date,
+.trip-form .field--lat,
+.trip-form .field--long {
+    grid-column: span 2;
+}
+
+.trip-form .field--actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.field--actions .btn {
+    width: auto;
+    min-width: 160px;
+}
+
+/* ---- Map hero ----------------------------------------------------------- */
+
+.eyebrow {
+    display: block;
+    font: 600 .72rem/1 var(--font-mono);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 .6rem;
+}
+
+.map-hero {
+    margin: 0 0 2.75rem;
+}
+
+#map {
+    height: 460px;
+    width: 100%;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    background: #dbe4e1;
+}
+
+.leaflet-container {
+    font: inherit;
+}
+
+/* ---- Section heading ---------------------------------------------------- */
+
+.section-head {
+    display: flex;
+    align-items: baseline;
+    gap: .9rem;
+    margin: 0 0 1.15rem;
+}
+
+.section-head__title {
+    margin: 0;
+    font: 700 1.7rem/1 var(--font-display);
+    letter-spacing: -.02em;
+}
+
+.section-head__count {
+    font: 600 .74rem/1 var(--font-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.section-head::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+    align-self: center;
+}
+
+/* ---- Trip cards (home) -------------------------------------------------- */
+
+.trip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.4rem;
+}
+
+.trip-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--shadow-sm);
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.trip-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: #c8c5b7;
+}
+
+.trip-card__media {
+    aspect-ratio: 3 / 2;
+    background: var(--accent-tint);
+    overflow: hidden;
+}
+
+.trip-card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    transition: opacity .5s ease;
+}
+
+.trip-card__media img.loaded {
+    opacity: 1;
+}
+
+.trip-card__placeholder {
+    width: 100%;
+    height: 100%;
+    background:
+        repeating-linear-gradient(45deg, transparent 0 11px, rgba(14, 110, 120, .05) 11px 22px),
+        var(--accent-tint);
+}
+
+.trip-card__body {
+    padding: .95rem 1.05rem 1.1rem;
+}
+
+.trip-card__title {
+    margin: 0 0 .5rem;
+    font: 700 1.28rem/1.15 var(--font-display);
+    letter-spacing: -.015em;
+}
+
+.trip-card__dossier {
+    margin: 0;
+    font: .74rem/1.5 var(--font-mono);
+    letter-spacing: .02em;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .1rem .55rem;
+}
+
+.trip-card__dossier .coord {
+    color: var(--accent-deep);
+}
+
+.trip-card__dossier .sep {
+    opacity: .5;
+}
+
+/* ---- Empty state -------------------------------------------------------- */
+
+.empty {
+    margin: 0 0 2.75rem;
+    padding: 2.4rem 1.5rem;
+    text-align: center;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    font-size: 1.05rem;
+}
+
+/* ---- Album + photo pages (existing markup, restyled) -------------------- */
+
+.title {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: .4rem 1rem;
+    margin: 0 0 1.4rem;
+}
+
+.title h2 {
+    margin: 0;
+    font: 700 1.9rem/1.05 var(--font-display);
+    letter-spacing: -.02em;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.title h4 {
+    margin: 0;
+    font: 400 .95rem/1.4 var(--font-body);
+    color: var(--muted);
+}
+
+.title > nav {
+    margin-left: auto;
+}
+
+.paging {
+    font: 600 .78rem/1 var(--font-mono);
+    letter-spacing: .04em;
+    color: var(--muted);
+}
+
+.paging a {
+    text-decoration: none;
+}
+
+.paging span {
+    opacity: .45;
+}
+
+.photolist {
+    columns: 210px;
+    column-gap: 14px;
+    margin: 0 0 1.5rem;
+}
+
+.photolist > .thumb {
+    position: relative;
+    break-inside: avoid;
+    margin: 0 0 14px;
+}
+
+.thumb__delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    margin: 0;
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+
+.thumb:hover .thumb__delete,
+.thumb:focus-within .thumb__delete {
+    opacity: 1;
+}
+
+.thumb__delete-btn {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(21, 39, 44, .78);
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+.thumb__delete-btn:hover {
+    background: #b23b2e;
+}
+
+.thumb__cover {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    margin: 0;
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+
+.thumb:hover .thumb__cover,
+.thumb:focus-within .thumb__cover,
+.thumb--cover .thumb__cover {
+    opacity: 1;
+}
+
+.thumb__cover-btn {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(21, 39, 44, .78);
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+.thumb__cover-btn:hover,
+.thumb--cover .thumb__cover-btn {
+    background: #0E6E78;
+}
+
+.pic a {
+    position: relative;
+    display: block;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--accent-tint);
+    box-shadow: var(--shadow-sm);
+}
+
+.pic img {
+    display: block;
+    width: 100%;
+    opacity: 0;
+    transition: opacity .5s ease;
+}
+
+.pic img.loaded {
+    opacity: 1;
+}
+
+.pic a::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    padding: .3rem .6rem;
+    font: .8rem/1.4 var(--font-body);
+    background: linear-gradient(transparent, rgba(21, 39, 44, .78));
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    transition: opacity .25s ease;
+}
+
+.pic a:hover::after,
+.pic a:focus::after {
+    opacity: 1;
+}
+
+.photo .pic {
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 1rem;
+}
+
+.photo .pic img {
+    opacity: 1;
+}
+
+.photo aside {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: .95rem;
+    color: var(--muted);
+}
+
+.photo .download {
+    margin-left: auto;
+    font: 600 .82rem/1 var(--font-mono);
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+/* ---- Album + photo admin panel ------------------------------------------ */
+
+.admin-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.upload-row {
+    display: flex;
+    align-items: end;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.upload-row .field {
+    flex: 1;
+    min-width: 200px;
+}
+
+.field--file input {
+    padding: .42em .5em;
+    background: var(--paper);
+}
+
+.field--file input::file-selector-button {
+    font: 600 .85rem/1 var(--font-body);
+    margin-right: .8em;
+    padding: .5em .9em;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.admin-panel .delete {
+    margin: 0;
+    align-self: flex-end;
+}
+
+.admin-delete {
+    font: 600 .72rem/1 var(--font-mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #b23b2e;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: .5em .8em;
+    cursor: pointer;
+}
+
+.admin-delete:hover {
+    background: #f6e7e4;
+    border-color: #e6c4bd;
+}
+
+/* ---- Album / photo header ----------------------------------------------- */
+
+.album-head {
+    margin: 0 0 1.7rem;
+}
+
+.album-head__top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .6rem 1rem;
+    flex-wrap: wrap;
+}
+
+.album-head__title {
+    margin: 0;
+    font: 700 2.1rem/1.05 var(--font-display);
+    letter-spacing: -.025em;
+}
+
+.album-head__dossier {
+    margin: .6rem 0 0;
+    font: .82rem/1.5 var(--font-mono);
+    letter-spacing: .02em;
+    color: var(--muted);
+}
+
+.album-head__dossier .coord {
+    color: var(--accent-deep);
+}
+
+.album-head__dossier a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.album-head__desc {
+    margin: .55rem 0 0;
+    color: var(--muted);
+    font-size: 1.02rem;
+    max-width: 60ch;
+}
+
+/* ---- Login -------------------------------------------------------------- */
+
+#login {
+    max-width: 360px;
+    margin: 2.5rem auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    padding: 1.8rem 1.8rem 2rem;
+}
+
+#login fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#login legend {
+    font: 700 1.5rem/1 var(--font-display);
+    letter-spacing: -.02em;
+    padding: 0;
+    margin-bottom: .3rem;
+}
+
+#login .remember {
+    display: flex;
+    align-items: center;
+    gap: .5ch;
+    font-size: .92rem;
+    color: var(--muted);
+}
+
+#login input[type=submit] {
+    width: 100%;
+    margin-top: .3rem;
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+
+@media (max-width: 720px) {
+    .trip-form {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .trip-form .field--place,
+    .trip-form .field--notes,
+    .trip-form .field--date,
+    .trip-form .field--lat,
+    .trip-form .field--long {
+        grid-column: span 2;
+    }
+
+    #map {
+        height: 340px;
+    }
+
+    .section-head__title {
+        font-size: 1.45rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+    }
+}

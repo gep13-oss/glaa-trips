@@ -1,0 +1,124 @@
+@page "{name}/{handler?}"
+@model AlbumsModel
+@{
+    ViewData["Title"] = Model.Album.DisplayName;
+    ViewData["Description"] = $"The photo album \"{Model.Album.DisplayName}\" containing {Model.Album.Photos.Count} photos including {string.Join(", ", Model.Album.Photos.Take(5))}";
+    ViewData["Image"] = Request.Scheme + "://" + Request.Host + Model.Album.CoverPhoto?.GetThumbnailLink((int)ImageType.Full, out int h);
+
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+}
+
+<div id="admin" class="admin-panel" if-authorized>
+    <form class="upload-row" method="post" enctype="multipart/form-data">
+        <div class="field field--file">
+            <label for="files">Add photos</label>
+            <input type="file" id="files" aria-label="Upload photo" name="files" required multiple accept="image/*" />
+        </div>
+        <input type="submit" class="btn btn--primary" asp-page-handler="upload" data-progress="Uploading…" id="btnfiles" value="Upload photos" />
+    </form>
+
+    <form class="trip-form" method="post" enctype="multipart/form-data">
+        <h2 class="trip-form__title">Edit trip</h2>
+        <div class="field field--place">
+            <label for="name">Place</label>
+            <input type="text" name="name" id="name" required value="@Model.Album.DisplayName" />
+        </div>
+        <div class="field field--notes">
+            <label for="description">Notes</label>
+            <input type="text" name="description" id="description" value="@Model.Album.Description" />
+        </div>
+        <div class="field field--date">
+            <label for="visited">Date visited</label>
+            <input type="date" name="visited" id="visited" value="@Model.Album.Visited.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="field field--lat">
+            <label for="latitude">Latitude</label>
+            <input type="number" step="any" name="latitude" id="latitude" value="@Model.Album.Latitude.ToString(inv)" />
+        </div>
+        <div class="field field--long">
+            <label for="longitude">Longitude</label>
+            <input type="number" step="any" name="longitude" id="longitude" value="@Model.Album.Longitude.ToString(inv)" />
+        </div>
+        <div class="field field--actions">
+            <input type="submit" class="btn btn--primary" asp-page-handler="edit" data-progress="Saving…" id="btnEdit" value="Save changes" />
+        </div>
+    </form>
+
+    <form method="post" class="delete">
+        <input type="submit" class="admin-delete" asp-page-handler="delete" id="deletealbum" aria-label="Delete album" title="Delete album" value="Delete trip" />
+    </form>
+</div>
+
+<header class="album-head">
+    <div class="album-head__top">
+        <h1 class="album-head__title">@Model.Album.DisplayName</h1>
+        <paging model="@Model.Album" />
+    </div>
+    <p class="album-head__dossier">
+        <span class="coord">@Model.Album.Coordinates</span>
+        <span class="sep">·</span>
+        <span>@Model.Album.Visited.ToString("d MMMM yyyy")</span>
+        <span class="sep">·</span>
+        <span>@Model.Album.Photos.Count photo@(Model.Album.Photos.Count == 1 ? "" : "s")</span>
+    </p>
+    @if (!string.IsNullOrWhiteSpace(Model.Album.Description))
+    {
+        <p class="album-head__desc">@Model.Album.Description</p>
+    }
+</header>
+
+<div id="gallery" class="pic photolist">
+    @{
+        foreach (Photo photo in Model.Album.Photos)
+        {
+            // The full-size (960px-wide) image and its height drive the PhotoSwipe
+            // lightbox. The href stays the per-photo page, so no-JS visitors,
+            // crawlers and admins still reach it; gallery.js opens the lightbox on
+            // click. Razor omits data-pswp-src when no full image exists, which
+            // takes that photo out of the lightbox and leaves the plain page link.
+            var fullImage = photo.GetThumbnailLink((int)ImageType.Full, out int fullHeight);
+            var isCover = Model.Album.CoverPhoto != null && Model.Album.CoverPhoto.Id == photo.Id;
+            <div class="thumb@(isCover ? " thumb--cover" : "")">
+                <a href="@photo.Link" data-text="@photo.DisplayName"
+                   data-pswp-src="@fullImage" data-pswp-width="@((int)ImageType.Full)" data-pswp-height="@fullHeight">
+                    <img photo="@photo" Type="Thumbnail" />
+                </a>
+                <form class="thumb__cover" method="post" action="/album/@Model.Album.UrlName/cover" if-authorized>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="photo" value="@photo.Id" />
+                    <button type="submit" class="thumb__cover-btn" title="@(isCover ? "Cover photo" : "Set as cover photo")" aria-label="Set @photo.DisplayName as the cover photo">@(isCover ? "★" : "☆")</button>
+                </form>
+                <form class="thumb__delete" method="post" action="@(photo.Link)delete" if-authorized>
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="thumb__delete-btn" title="Delete photo" aria-label="Delete @photo.DisplayName">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        }
+    }
+</div>
+
+@section scripts {
+    <script type="module" src="~/js/gallery.js" asp-append-version="true"></script>
+    <script if-authorized src="~/js/admin.js" async asp-append-version="true"></script>
+}
+
+@section head {
+    <link rel="stylesheet" href="/lib/photoswipe/photoswipe.css" />
+    @if (Model.Album.Next != null)
+    {
+        <link rel="next" href="@Model.Album.Next.Link" />
+        <link rel="prefetch" href="@Model.Album.Next.Link" />
+    }
+
+    @if (Model.Album.Previous != null)
+    {
+        <link rel="prev" href="@Model.Album.Previous.Link" />
+    }
+}

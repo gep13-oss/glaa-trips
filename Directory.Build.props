@@ -1,0 +1,14 @@
+<Project>
+
+  <!-- Applies to every project in the repo (web + tests). -->
+  <ItemGroup>
+    <!-- Dev-only analyzer (PrivateAssets=all => not a runtime/shipping
+         dependency). Rule severities are tuned in .editorconfig; the full
+         triage pass is tracked in the workspace TODO. -->
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>
