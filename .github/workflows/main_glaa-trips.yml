@@ -1,7 +1,17 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
+# Build, test and deploy glaa-trips to Azure App Service.
+#
+# Auth is secretless (OIDC): the deploy job requests a short-lived token via a
+# federated credential on an Azure identity, so no publish profile or client
+# secret is stored in GitHub. See the "Deploying to Azure" section of README.md
+# for the one-time Azure setup (resources, app settings, and the three repo
+# secrets referenced below).
+#
+# Placeholders to set for your environment:
+#   env.AZURE_WEBAPP_NAME  - the App Service name
+#   secrets.AZURE_CLIENT_ID / AZURE_TENANT_ID / AZURE_SUBSCRIPTION_ID - the
+#     federated identity used by azure/login.
 
-name: Build and deploy ASP.Net Core app to Azure Web App - glaa-trips
+name: Build and deploy glaa-trips
 
 on:
   push:
@@ -9,49 +19,71 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  AZURE_WEBAPP_NAME: glaa-trips
+  DOTNET_VERSION: "10.0.x"
+
 jobs:
-  build:
-    runs-on: windows-latest
-
+  build-test:
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Set up .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '2.1.807'
-        include-prerelease: true
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Build with dotnet
-      run: dotnet build --configuration Release
+      - name: Build
+        run: dotnet build GlaaTrips.slnx -c Release
 
-    - name: dotnet publish
-      run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+      # The UI tests drive a real browser, so install Chromium (with its OS
+      # dependencies) before running them. The playwright.ps1 script is produced
+      # when the UITests project is built (step above).
+      - name: Install Playwright (Chromium + OS deps)
+        run: pwsh tests/GlaaTrips.UITests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
 
-    - name: Upload artifact for deployment job
-      uses: actions/upload-artifact@v2
-      with:
-        name: .net-app
-        path: ${{env.DOTNET_ROOT}}/myapp
+      # Runs the format gate, unit tests and the Playwright UI tests, matching
+      # the local gate. (The Azure Blob store tests stay skipped without a
+      # connection string; the local disk store covers the same contract.)
+      - name: Format check, build and test
+        run: dotnet cake.cs --target=Test
+
+      - name: Publish
+        run: dotnet publish src/GlaaTrips/GlaaTrips.csproj -c Release -o ${{ github.workspace }}/publish
+
+      - name: Upload published app
+        uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: ${{ github.workspace }}/publish
 
   deploy:
-    runs-on: windows-latest
-    needs: build
+    needs: build-test
+    runs-on: ubuntu-latest
     environment:
-      name: 'production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-
+      name: production
+      url: ${{ steps.deploy.outputs.webapp-url }}
+    permissions:
+      id-token: write # required for the OIDC token
+      contents: read
     steps:
-    - name: Download artifact from build job
-      uses: actions/download-artifact@v2
-      with:
-        name: .net-app
+      - name: Download published app
+        uses: actions/download-artifact@v4
+        with:
+          name: app
+          path: ./publish
 
-    - name: Deploy to Azure Web App
-      id: deploy-to-webapp
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: 'glaa-trips'
-        slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_c126354347d742609b8ec1440b7878b1 }}
-        package: .
+      - name: Sign in to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure App Service
+        id: deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          package: ./publish

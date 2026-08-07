@@ -65,3 +65,113 @@ passwords be spotted and lets an attacker attack every account at once).
 The original single administrator account (`user:username` / `user:password` /
 `user:salt`) still works and is treated as an admin, so existing setups are
 unaffected.
+
+## Deploying to Azure
+
+The app runs on a **Linux App Service**; album content (photos, thumbnails,
+metadata, markers) lives in a **private Azure Blob container**, not on the
+app's disk, so it survives redeploys and restarts. A GitHub Actions workflow
+(`.github/workflows/main_glaa-trips.yml`) builds, tests and deploys on every
+push to `main`, authenticating to Azure with **OIDC** (no publish profile or
+secret stored in GitHub).
+
+All `az` snippets below assume `az login` and a chosen subscription
+(`az account set --subscription <id>`).
+
+### 1. Provision the resources (one-time)
+
+```bash
+# Adjust the names/region. Storage account names must be globally unique and
+# 3–24 lowercase alphanumeric characters.
+RG=glaa-trips-rg
+LOCATION=uksouth
+PLAN=glaa-trips-plan
+APP=glaa-trips                 # must match AZURE_WEBAPP_NAME in the workflow
+STORAGE=glaatripsstore123
+CONTAINER=albums
+
+az group create -n $RG -l $LOCATION
+
+# Storage account + a private container for album content
+az storage account create -n $STORAGE -g $RG -l $LOCATION \
+  --sku Standard_LRS --allow-blob-public-access false
+az storage container create --account-name $STORAGE -n $CONTAINER   # private
+
+# Linux App Service (Basic B1) running .NET 10
+az appservice plan create -n $PLAN -g $RG --is-linux --sku B1
+az webapp create -n $APP -g $RG -p $PLAN --runtime "DOTNETCORE:10.0"
+```
+
+### 2. Configure application settings
+
+App settings use `__` (double underscore) in place of the `:` config
+separator. Do **not** set `ASPNETCORE_ENVIRONMENT=Development` in production.
+
+```bash
+CONN=$(az storage account show-connection-string -n $STORAGE -g $RG \
+  --query connectionString -o tsv)
+
+az webapp config appsettings set -n $APP -g $RG --settings \
+  Storage__Provider=AzureBlob \
+  Storage__AzureBlob__ConnectionString="$CONN" \
+  Storage__AzureBlob__ContainerName=$CONTAINER \
+  forcessl=true
+
+# The admin account (generate the salt + hash as in "Adding a user" above)
+az webapp config appsettings set -n $APP -g $RG --settings \
+  user__username="<admin-username>" \
+  user__salt="<unique random salt>" \
+  user__password="<PBKDF2 hash>"
+
+# Any additional viewer/admin accounts, same shape as user-secrets:
+az webapp config appsettings set -n $APP -g $RG --settings \
+  Users__alice__salt="<unique random salt>" \
+  Users__alice__password="<PBKDF2 hash>" \
+  Users__alice__role="viewer"
+```
+
+(For extra safety the connection string and hashes can live in Key Vault and be
+referenced from app settings.)
+
+### 3. Set up the secretless deploy identity (OIDC)
+
+Create an identity GitHub Actions can use, let it deploy the web app, and trust
+this repository's `main` branch.
+
+```bash
+SUBSCRIPTION=$(az account show --query id -o tsv)
+TENANT=$(az account show --query tenantId -o tsv)
+
+APP_ID=$(az ad app create --display-name "glaa-trips-deploy" --query appId -o tsv)
+az ad sp create --id $APP_ID
+
+az role assignment create --assignee $APP_ID --role "Contributor" \
+  --scope "/subscriptions/$SUBSCRIPTION/resourceGroups/$RG/providers/Microsoft.Web/sites/$APP"
+
+az ad app federated-credential create --id $APP_ID --parameters '{
+  "name": "github-main",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:<owner>/<repo>:ref:refs/heads/main",
+  "audiences": ["api://AzureADTokenExchange"]
+}'
+```
+
+Then add three **repository secrets** (Settings → Secrets and variables →
+Actions):
+
+- `AZURE_CLIENT_ID` = the `APP_ID` above
+- `AZURE_TENANT_ID` = the `TENANT` above
+- `AZURE_SUBSCRIPTION_ID` = the `SUBSCRIPTION` above
+
+### 4. Deploy
+
+Merge `overhaul` into `main` when you're happy and push. The workflow builds,
+runs the full test suite (format + unit + Playwright UI), publishes and deploys
+to the App Service. Ensure `AZURE_WEBAPP_NAME` in the workflow matches `$APP`.
+
+### CDN (optional, later)
+
+Because content is served through the authenticated app rather than a public
+bucket, a CDN would front the **App Service** (e.g. Azure Front Door). At
+family scale this mainly helps static-asset latency, so add it only if
+world-wide speed becomes a real concern.
