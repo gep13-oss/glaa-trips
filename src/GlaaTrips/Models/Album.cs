@@ -28,6 +28,7 @@ namespace GlaaTrips.Models
                 Visited = metaData.Visited;
                 Latitude = metaData.Latitude;
                 Longitude = metaData.Longitude;
+                CoverPhotoName = metaData.CoverPhoto;
             }
         }
 
@@ -83,10 +84,31 @@ namespace GlaaTrips.Models
 
         public List<Photo> Photos { get; private set; }
 
+        /// <summary>
+        /// Gets the file name of the photo chosen as the album's cover, or
+        /// <c>null</c> when none has been chosen (in which case <see cref="CoverPhoto"/>
+        /// falls back to the first photo). Handlers preserve this across edits.
+        /// </summary>
+        public string CoverPhotoName { get; }
+
+        /// <summary>
+        /// Gets the photo shown as the album's cover on the home page: the photo
+        /// matching <see cref="CoverPhotoName"/> when one is set and still present,
+        /// otherwise the first photo.
+        /// </summary>
         public Photo CoverPhoto
         {
             get
             {
+                if (!string.IsNullOrEmpty(CoverPhotoName))
+                {
+                    var chosen = Photos?.FirstOrDefault(p => p.Id.Equals(CoverPhotoName, StringComparison.OrdinalIgnoreCase));
+                    if (chosen != null)
+                    {
+                        return chosen;
+                    }
+                }
+
                 return Photos?.FirstOrDefault();
             }
         }

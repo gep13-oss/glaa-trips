@@ -542,6 +542,42 @@ img {
     background: #b23b2e;
 }
 
+.thumb__cover {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    margin: 0;
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+
+.thumb:hover .thumb__cover,
+.thumb:focus-within .thumb__cover,
+.thumb--cover .thumb__cover {
+    opacity: 1;
+}
+
+.thumb__cover-btn {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(21, 39, 44, .78);
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+.thumb__cover-btn:hover,
+.thumb--cover .thumb__cover-btn {
+    background: #0E6E78;
+}
+
 .pic a {
     position: relative;
     display: block;

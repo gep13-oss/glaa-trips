@@ -77,11 +77,17 @@
             // click. Razor omits data-pswp-src when no full image exists, which
             // takes that photo out of the lightbox and leaves the plain page link.
             var fullImage = photo.GetThumbnailLink((int)ImageType.Full, out int fullHeight);
-            <div class="thumb">
+            var isCover = Model.Album.CoverPhoto != null && Model.Album.CoverPhoto.Id == photo.Id;
+            <div class="thumb@(isCover ? " thumb--cover" : "")">
                 <a href="@photo.Link" data-text="@photo.DisplayName"
                    data-pswp-src="@fullImage" data-pswp-width="@((int)ImageType.Full)" data-pswp-height="@fullHeight">
                     <img photo="@photo" Type="Thumbnail" />
                 </a>
+                <form class="thumb__cover" method="post" action="/album/@Model.Album.UrlName/cover" if-authorized>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="photo" value="@photo.Id" />
+                    <button type="submit" class="thumb__cover-btn" title="@(isCover ? "Cover photo" : "Set as cover photo")" aria-label="Set @photo.DisplayName as the cover photo">@(isCover ? "★" : "☆")</button>
+                </form>
                 <form class="thumb__delete" method="post" action="@(photo.Link)delete" if-authorized>
                     @Html.AntiForgeryToken()
                     <button type="submit" class="thumb__delete-btn" title="Delete photo" aria-label="Delete @photo.DisplayName">✕</button>

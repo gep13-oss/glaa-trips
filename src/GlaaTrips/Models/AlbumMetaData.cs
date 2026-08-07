@@ -13,5 +13,12 @@ namespace GlaaTrips.Models
         public double Latitude { get; set; }
 
         public double Longitude { get; set; }
+
+        /// <summary>
+        /// Gets or sets the file name of the photo chosen to represent the album
+        /// (its cover on the home page). When empty, the album falls back to its
+        /// first photo.
+        /// </summary>
+        public string CoverPhoto { get; set; }
     }
 }

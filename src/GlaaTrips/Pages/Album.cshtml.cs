@@ -121,6 +121,9 @@ namespace GlaaTrips.Pages
                 Visited = DateTime.Parse(visited),
                 Latitude = latitude,
                 Longitude = longitude,
+
+                // Editing the trip details must not drop the chosen cover photo.
+                CoverPhoto = existingAlbum.CoverPhotoName,
             };
 
             await _store.WriteMetadataAsync(slug, albumMetaData);
@@ -195,6 +198,47 @@ namespace GlaaTrips.Pages
             album.AddPhotos(uploaded);
 
             return new RedirectResult($"~/album/{WebUtility.UrlEncode(name).Replace('+', ' ')}/");
+        }
+
+        public async Task<IActionResult> OnPostCover([FromRoute(Name = "name")] string slug, string photo)
+        {
+            if (RequireAdmin() is { } challenge)
+            {
+                return challenge;
+            }
+
+            if (!SafePathHelper.IsValidSegment(slug) || !SafePathHelper.IsValidSegment(photo))
+            {
+                return BadRequest();
+            }
+
+            var album = _ac.Albums.FirstOrDefault(a => a.Id.Equals(slug, StringComparison.OrdinalIgnoreCase));
+
+            if (album == null)
+            {
+                return NotFound();
+            }
+
+            // The chosen cover must be a photo that is actually in the album.
+            if (!album.Photos.Any(p => p.Id.Equals(photo, StringComparison.OrdinalIgnoreCase)))
+            {
+                return NotFound();
+            }
+
+            var albumMetaData = new AlbumMetaData
+            {
+                DisplayName = album.DisplayName,
+                Description = album.Description,
+                Visited = album.Visited,
+                Latitude = album.Latitude,
+                Longitude = album.Longitude,
+                CoverPhoto = photo,
+            };
+
+            await _store.WriteMetadataAsync(slug, albumMetaData);
+            _ac.ReloadAlbum(slug);
+
+            return new RedirectResult($"~/album/{slug}/");
         }
     }
 }
