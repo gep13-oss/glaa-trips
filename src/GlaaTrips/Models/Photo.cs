@@ -1,7 +1,5 @@
-﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace GlaaTrips.Models
@@ -9,21 +7,15 @@ namespace GlaaTrips.Models
     public class Photo : IPaginator
     {
         private readonly Dictionary<int, int> _heights = new Dictionary<int, int>();
-        private static readonly Regex _size = new Regex(@"(?<name>.+)-(?<width>[0-9]+)x(?<height>[0-9]+).", RegexOptions.Compiled);
+        private static readonly Regex _size = new Regex(@"-(?<width>[0-9]+)x(?<height>[0-9]+)\.", RegexOptions.Compiled);
 
-        public Photo(Album album, FileInfo file)
+        public Photo(Album album, string fileName)
         {
             Album = album;
-            AbsolutePath = file.FullName;
+            Id = fileName;
         }
 
-        public string Id
-        {
-            get
-            {
-                return Path.GetFileName(AbsolutePath);
-            }
-        }
+        public string Id { get; private set; }
 
         public string DisplayName
         {
@@ -42,8 +34,6 @@ namespace GlaaTrips.Models
         }
 
         public Album Album { get; }
-
-        public string AbsolutePath { get; set; }
 
         public IPaginator Next
         {
@@ -87,55 +77,56 @@ namespace GlaaTrips.Models
         {
             get
             {
-                return $"/albums/{Album.UrlName}/{Id.Replace(" ", "%20").ToLowerInvariant()}";
+                return Album.Store.PhotoUrl(Album.Id, Id);
             }
         }
 
-        public string ThumbnailDirectory
-        {
-            get
-            {
-                return $"/albums/{Album.UrlName}/thumbnail/";
-            }
-        }
-
+        /// <summary>
+        /// Resolves the served URL of the thumbnail generated at the given width
+        /// and reports its height. The matching thumbnail is looked up from the
+        /// store (by the <c>{name}-{width}x{height}{ext}</c> convention) and the
+        /// resolved height is cached per width so repeated calls do not re-query.
+        /// </summary>
+        /// <param name="width">The thumbnail width to resolve.</param>
+        /// <param name="height">The resolved thumbnail height, or <c>0</c> when there is no such thumbnail.</param>
+        /// <returns>The thumbnail URL, or <c>null</c> when no thumbnail of that width exists.</returns>
         public string GetThumbnailLink(int width, out int height)
         {
-            string ext = Path.GetExtension(Id);
-
             if (_heights.TryGetValue(width, out height))
             {
-                return GenerateThumbnailLink(width, height, ext);
+                return Album.Store.ThumbnailUrl(Album.Id, ThumbnailFileName(width, height));
             }
 
-            string absoluteDir = Path.Combine(Path.GetDirectoryName(AbsolutePath), "thumbnail");
-            string pattern = $"{DisplayName}-{width}x*{ext}";
-            var thumbnail = Directory.GetFiles(absoluteDir, pattern).FirstOrDefault();
-
-            if (!string.IsNullOrEmpty(thumbnail))
+            foreach (var thumbnail in Album.Store.ListThumbnailFileNames(Album.Id))
             {
-                string fileName = Path.GetFileName(thumbnail);
-                Match match = _size.Match(fileName);
+                if (!PhotoStoreConventions.ThumbnailBelongsTo(thumbnail, Id))
+                {
+                    continue;
+                }
 
-                if (match.Success)
+                Match match = _size.Match(thumbnail);
+
+                if (match.Success && int.Parse(match.Groups["width"].Value) == width)
                 {
                     height = int.Parse(match.Groups["height"].Value);
                     _heights[width] = height;
-                    return GenerateThumbnailLink(width, height, ext);
+                    return Album.Store.ThumbnailUrl(Album.Id, thumbnail);
                 }
             }
 
+            height = 0;
             return null;
-        }
-
-        private string GenerateThumbnailLink(int width, int height, string ext)
-        {
-            return $"{ThumbnailDirectory}{UrlName}-{width}x{height}{ext}";
         }
 
         public override string ToString()
         {
             return DisplayName;
+        }
+
+        private string ThumbnailFileName(int width, int height)
+        {
+            string ext = Path.GetExtension(Id);
+            return $"{DisplayName}-{width}x{height}{ext}";
         }
     }
 }

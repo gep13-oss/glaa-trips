@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using GlaaTrips.Models;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GlaaTrips.Pages
@@ -11,12 +11,12 @@ namespace GlaaTrips.Pages
     public class PhotoModel : AdminHandlerPageModel
     {
         private readonly AlbumCollection _ac;
-        private readonly IWebHostEnvironment _environment;
+        private readonly IPhotoStore _store;
 
-        public PhotoModel(AlbumCollection ac, IWebHostEnvironment environment)
+        public PhotoModel(AlbumCollection ac, IPhotoStore store)
         {
             _ac = ac;
-            _environment = environment;
+            _store = store;
         }
 
         public Photo Photo { get; set; }
@@ -33,7 +33,7 @@ namespace GlaaTrips.Pages
             return Page();
         }
 
-        public IActionResult OnPostRename(string albumName, string photoName)
+        public async Task<IActionResult> OnPostRename(string albumName, string photoName)
         {
             if (RequireAdmin() is { } challenge)
             {
@@ -55,29 +55,17 @@ namespace GlaaTrips.Pages
             }
 
             var album = Photo.Album;
-            string name = requestedName + Path.GetExtension(Photo.AbsolutePath);
+            string newFileName = requestedName + Path.GetExtension(Photo.Id);
 
-            var newPhotoPath = new FileInfo(Path.Combine(album.AbsolutePath, name));
+            await _store.RenamePhotoAsync(album.Id, Photo.Id, newFileName);
 
-            System.IO.File.Move(Photo.AbsolutePath, newPhotoPath.FullName);
-            var newPhoto = new Photo(album, newPhotoPath);
-
+            var newPhoto = new Photo(album, newFileName);
             album.ReplacePhoto(Photo, newPhoto);
-
-            // Rename thumbnails
-            string folder = Path.Combine(album.AbsolutePath, "thumbnail");
-            var pattern = $"{Photo.DisplayName}-*x*{Path.GetExtension(Photo.AbsolutePath)}";
-
-            foreach (var file in Directory.EnumerateFiles(folder, pattern))
-            {
-                string newThumbnail = Path.Combine(folder, Path.GetFileName(file).Replace(Photo.DisplayName, newPhoto.DisplayName));
-                System.IO.File.Move(file, newThumbnail);
-            }
 
             return new RedirectResult($"~/photo/{WebUtility.UrlEncode(albumName).Replace('+', ' ')}/{newPhoto.DisplayName}/");
         }
 
-        public IActionResult OnPostDelete(string albumName, string photoName)
+        public async Task<IActionResult> OnPostDelete(string albumName, string photoName)
         {
             if (RequireAdmin() is { } challenge)
             {
@@ -92,19 +80,9 @@ namespace GlaaTrips.Pages
             }
 
             var album = Photo.Album;
+
+            await _store.DeletePhotoAsync(album.Id, Photo.Id);
             album.RemovePhoto(Photo);
-
-            if (System.IO.File.Exists(Photo.AbsolutePath))
-            {
-                System.IO.File.Delete(Photo.AbsolutePath);
-                string folder = Path.Combine(album.AbsolutePath, "thumbnail");
-                var pattern = $"{Photo.DisplayName}-*x*{Path.GetExtension(Photo.AbsolutePath)}";
-
-                foreach (var file in Directory.EnumerateFiles(folder, pattern))
-                {
-                    System.IO.File.Delete(file);
-                }
-            }
 
             return new RedirectResult($"~/album/{WebUtility.UrlEncode(albumName).Replace('+', ' ')}/");
         }

@@ -1,35 +1,30 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using GlaaTrips.Models;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.FileProviders;
 
 namespace GlaaTrips.UnitTests
 {
     /// <summary>
     /// Direct coverage for <see cref="AlbumCollection"/> and its copy-on-write
-    /// mutation methods. The singleton collection is read by public requests while
-    /// admin handlers mutate it, so these tests pin down the two properties that
-    /// matter: mutations are visible and correct, and concurrent reads never see a
-    /// half-applied change. They run without a server; the UITests suite proves the
-    /// same behaviour end-to-end over HTTP.
+    /// mutation methods, exercised over a <see cref="LocalDiskPhotoStore"/> pointed
+    /// at a temp albums root. The singleton collection is read by public requests
+    /// while admin handlers mutate it, so these tests pin down the two properties
+    /// that matter: mutations are visible and correct, and concurrent reads never
+    /// see a half-applied change. They run without a server; the UITests suite
+    /// proves the same behaviour end-to-end over HTTP.
     /// </summary>
     [TestFixture]
     public class AlbumCollectionTests
     {
         private string _root = string.Empty;
+        private string _albumsRoot = string.Empty;
 
         [SetUp]
         public void CreateRoot()
         {
             _root = Path.Combine(Path.GetTempPath(), "glaa-trips-unit-" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(Path.Combine(_root, "albums"));
+            _albumsRoot = Path.Combine(_root, "albums");
+            Directory.CreateDirectory(_albumsRoot);
         }
 
         [TearDown]
@@ -50,10 +45,10 @@ namespace GlaaTrips.UnitTests
         [Test]
         public void Add_inserts_the_album_and_orders_newest_visited_first()
         {
-            var ac = new AlbumCollection(new StubWebHostEnvironment(_root));
+            var ac = new AlbumCollection(Store());
 
-            ac.Add(new Album(AlbumPath("apple"), ac, Meta("Apple", new DateTime(2020, 5, 1))));
-            ac.Add(new Album(AlbumPath("zebra"), ac, Meta("Zebra", new DateTime(2026, 5, 1))));
+            ac.Add(new Album("apple", ac, Meta("Apple", new DateTime(2020, 5, 1))));
+            ac.Add(new Album("zebra", ac, Meta("Zebra", new DateTime(2026, 5, 1))));
 
             // Newest trip first, regardless of insertion order or name.
             Assert.That(ac.Albums.Select(a => a.Id), Is.EqualTo(new[] { "zebra", "apple" }));
@@ -66,7 +61,7 @@ namespace GlaaTrips.UnitTests
             SeedAlbumOnDisk("newer", "Newer", photoCount: 0, visited: new DateTime(2025, 1, 1));
             SeedAlbumOnDisk("same-b", "Same B", photoCount: 0, visited: new DateTime(2023, 6, 1));
             SeedAlbumOnDisk("same-a", "Same A", photoCount: 0, visited: new DateTime(2023, 6, 1));
-            var ac = new AlbumCollection(new StubWebHostEnvironment(_root));
+            var ac = new AlbumCollection(Store());
 
             Assert.That(
                 ac.Albums.Select(a => a.Id),
@@ -77,9 +72,9 @@ namespace GlaaTrips.UnitTests
         [Test]
         public void Remove_takes_the_matching_album_out_and_leaves_the_rest()
         {
-            var ac = new AlbumCollection(new StubWebHostEnvironment(_root));
-            ac.Add(new Album(AlbumPath("apple"), ac, Meta("Apple")));
-            ac.Add(new Album(AlbumPath("banana"), ac, Meta("Banana")));
+            var ac = new AlbumCollection(Store());
+            ac.Add(new Album("apple", ac, Meta("Apple")));
+            ac.Add(new Album("banana", ac, Meta("Banana")));
 
             ac.Remove("APPLE");
 
@@ -87,25 +82,24 @@ namespace GlaaTrips.UnitTests
         }
 
         [Test]
-        public void ReloadFromDisk_refreshes_metadata_and_keeps_photos_and_absolute_path()
+        public void ReloadAlbum_refreshes_metadata_and_keeps_photos()
         {
-            var albumPath = SeedAlbumOnDisk("trip", "Trip", photoCount: 1);
-            var ac = new AlbumCollection(new StubWebHostEnvironment(_root));
+            SeedAlbumOnDisk("trip", "Trip", photoCount: 1);
+            var ac = new AlbumCollection(Store());
 
             var before = ac.Albums.Single(a => a.Id == "trip");
             Assert.That(before.Photos, Has.Count.EqualTo(1), "precondition: the seeded album has a photo");
 
             // Rewrite the album's data.json the way an edit would, then reload it.
-            File.WriteAllText(Path.Combine(albumPath, "data.json"), JsonSerializer.Serialize(Meta("Trip Renamed")));
-            ac.ReloadFromDisk(albumPath);
+            File.WriteAllText(Path.Combine(_albumsRoot, "trip", "data.json"), JsonSerializer.Serialize(Meta("Trip Renamed")));
+            ac.ReloadAlbum("trip");
 
             var after = ac.Albums.Single(a => a.Id == "trip");
             Assert.Multiple(() =>
             {
                 Assert.That(after.DisplayName, Is.EqualTo("Trip Renamed"), "the refreshed metadata should be visible");
                 Assert.That(after.Photos, Has.Count.EqualTo(1), "reloading must not drop the album's photos");
-                Assert.That(after.AbsolutePath, Is.EqualTo(albumPath), "the album must keep its real absolute path");
-                Assert.That(Path.IsPathRooted(after.AbsolutePath), Is.True);
+                Assert.That(after.Id, Is.EqualTo("trip"), "the album must keep its id");
             });
         }
 
@@ -114,7 +108,7 @@ namespace GlaaTrips.UnitTests
         {
             SeedAlbumOnDisk("edinburgh", "Edinburgh", photoCount: 0, latitude: 55.95, longitude: -3.19);
             SeedAlbumOnDisk("paris", "Paris", photoCount: 0, latitude: 48.85, longitude: 2.35);
-            var ac = new AlbumCollection(new StubWebHostEnvironment(_root));
+            var ac = new AlbumCollection(Store());
 
             await ac.WriteMarkersAsync();
 
@@ -135,7 +129,7 @@ namespace GlaaTrips.UnitTests
             SeedAlbumOnDisk("a", "A", photoCount: 0);
             SeedAlbumOnDisk("b", "B", photoCount: 0);
             SeedAlbumOnDisk("c", "C", photoCount: 0);
-            var ac = new AlbumCollection(new StubWebHostEnvironment(_root));
+            var ac = new AlbumCollection(Store());
 
             var errors = new ConcurrentQueue<Exception>();
             var stop = new bool[1];
@@ -167,9 +161,9 @@ namespace GlaaTrips.UnitTests
                 try
                 {
                     var slug = "t" + i;
-                    var path = SeedAlbumOnDisk(slug, slug.ToUpperInvariant(), photoCount: 0);
-                    ac.Add(new Album(path, ac, Meta(slug)));
-                    ac.ReloadFromDisk(path);
+                    SeedAlbumOnDisk(slug, slug.ToUpperInvariant(), photoCount: 0);
+                    ac.Add(new Album(slug, ac, Meta(slug)));
+                    ac.ReloadAlbum(slug);
                     ac.Remove(slug);
                 }
                 catch (Exception ex)
@@ -186,6 +180,11 @@ namespace GlaaTrips.UnitTests
             Assert.That(ac.Albums.Select(a => a.Id), Is.EquivalentTo(new[] { "a", "b", "c" }), "only the original albums should remain");
         }
 
+        private LocalDiskPhotoStore Store()
+        {
+            return new LocalDiskPhotoStore(_albumsRoot);
+        }
+
         private static AlbumMetaData Meta(string displayName, DateTime? visited = null)
         {
             return new AlbumMetaData
@@ -196,14 +195,9 @@ namespace GlaaTrips.UnitTests
             };
         }
 
-        private string AlbumPath(string slug)
-        {
-            return Path.Combine(_root, "albums", slug);
-        }
-
         private string SeedAlbumOnDisk(string slug, string displayName, int photoCount, double latitude = 0, double longitude = 0, DateTime? visited = null)
         {
-            var path = AlbumPath(slug);
+            var path = Path.Combine(_albumsRoot, slug);
             Directory.CreateDirectory(path);
 
             var meta = new AlbumMetaData
@@ -226,34 +220,8 @@ namespace GlaaTrips.UnitTests
 
         private List<Marker> ReadMarkers()
         {
-            var json = File.ReadAllText(Path.Combine(_root, "albums", "markers.json"));
+            var json = File.ReadAllText(Path.Combine(_albumsRoot, "markers.json"));
             return JsonSerializer.Deserialize<List<Marker>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
-        }
-
-        /// <summary>
-        /// Minimal <see cref="IWebHostEnvironment"/> for constructing an
-        /// <see cref="AlbumCollection"/> in isolation. Only <see cref="WebRootPath"/>
-        /// is read by the collection; the rest satisfy the interface.
-        /// </summary>
-        private sealed class StubWebHostEnvironment : IWebHostEnvironment
-        {
-            public StubWebHostEnvironment(string webRootPath)
-            {
-                WebRootPath = webRootPath;
-                ContentRootPath = webRootPath;
-            }
-
-            public string WebRootPath { get; set; }
-
-            public IFileProvider WebRootFileProvider { get; set; } = null!;
-
-            public string ApplicationName { get; set; } = "GlaaTrips.UnitTests";
-
-            public string ContentRootPath { get; set; }
-
-            public IFileProvider ContentRootFileProvider { get; set; } = null!;
-
-            public string EnvironmentName { get; set; } = "Test";
         }
     }
 }

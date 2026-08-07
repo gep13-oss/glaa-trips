@@ -1,12 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text.Json;
 using System.Threading.Tasks;
 using GlaaTrips.Models;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,13 +13,13 @@ namespace GlaaTrips.Pages
     public class AlbumsModel : AdminHandlerPageModel
     {
         private readonly AlbumCollection _ac;
-        private readonly IWebHostEnvironment _environment;
+        private readonly IPhotoStore _store;
         private readonly ImageProcessor _processor;
 
-        public AlbumsModel(AlbumCollection ac, IWebHostEnvironment environment, ImageProcessor processor)
+        public AlbumsModel(AlbumCollection ac, IPhotoStore store, ImageProcessor processor)
         {
             _ac = ac;
-            _environment = environment;
+            _store = store;
             _processor = processor;
         }
 
@@ -46,17 +44,12 @@ namespace GlaaTrips.Pages
                 return challenge;
             }
 
-            string albumsRoot = Path.Combine(_environment.WebRootPath, "albums");
-
-            if (!SafePathHelper.TryCombineWithin(albumsRoot, name, out string path))
+            if (!SafePathHelper.IsValidSegment(name))
             {
                 return BadRequest();
             }
 
-            if (Directory.Exists(path))
-            {
-                Directory.Delete(path, true);
-            }
+            await _store.DeleteAlbumAsync(name);
 
             _ac.Remove(name);
             await _ac.WriteMarkersAsync();
@@ -74,31 +67,25 @@ namespace GlaaTrips.Pages
             string slugName = SlugHelper.GenerateSlug(name);
 
             // The slug is normally already separator-free, but an all-punctuation
-            // title can slug to an empty string, which would resolve to the albums
-            // root itself. Reject anything that is not a safe single segment.
+            // title can slug to an empty string. Reject anything that is not a safe
+            // single segment before it is used as an album id.
             if (!SafePathHelper.IsValidSegment(slugName))
             {
                 return BadRequest();
             }
 
-            string path = Path.Combine(_environment.WebRootPath, "albums", slugName);
-
-            Directory.CreateDirectory(path);
-
-            var metadataFileName = Path.Combine(path, "data.json");
-            var albumMetaData = new AlbumMetaData();
-            albumMetaData.DisplayName = name;
-            albumMetaData.Description = description;
-            albumMetaData.Visited = DateTime.Parse(visited);
-            albumMetaData.Latitude = latitude;
-            albumMetaData.Longitude = longitude;
-
-            using (var createStream = System.IO.File.Create(metadataFileName))
+            var albumMetaData = new AlbumMetaData
             {
-                await JsonSerializer.SerializeAsync<AlbumMetaData>(createStream, albumMetaData);
-            }
+                DisplayName = name,
+                Description = description,
+                Visited = DateTime.Parse(visited),
+                Latitude = latitude,
+                Longitude = longitude,
+            };
 
-            _ac.Add(new Album(path, _ac, albumMetaData));
+            await _store.WriteMetadataAsync(slugName, albumMetaData);
+
+            _ac.Add(new Album(slugName, _ac, albumMetaData));
             await _ac.WriteMarkersAsync();
 
             return new RedirectResult($"~/album/{slugName}/");
@@ -114,12 +101,8 @@ namespace GlaaTrips.Pages
             // The album slug is the route value. It is bound explicitly from the
             // route because the edit form also posts a "name" field (the album's
             // display name), and Razor Pages' default binder would otherwise let
-            // that form value win. The previous implementation scraped the slug
-            // out of the request path with a "/Album/" regex that never matched
-            // the lower-case route, so every edit fell through to BadRequest.
-            string albumsRoot = Path.Combine(_environment.WebRootPath, "albums");
-
-            if (!SafePathHelper.TryCombineWithin(albumsRoot, slug, out string path))
+            // that form value win.
+            if (!SafePathHelper.IsValidSegment(slug))
             {
                 return BadRequest();
             }
@@ -131,24 +114,20 @@ namespace GlaaTrips.Pages
                 return NotFound();
             }
 
-            var metadataFileName = Path.Combine(path, "data.json");
-            var albumMetaData = new AlbumMetaData();
-            albumMetaData.DisplayName = name;
-            albumMetaData.Description = description;
-            albumMetaData.Visited = DateTime.Parse(visited);
-            albumMetaData.Latitude = latitude;
-            albumMetaData.Longitude = longitude;
-
-            using (var createStream = System.IO.File.Create(metadataFileName))
+            var albumMetaData = new AlbumMetaData
             {
-                await JsonSerializer.SerializeAsync<AlbumMetaData>(createStream, albumMetaData);
-            }
+                DisplayName = name,
+                Description = description,
+                Visited = DateTime.Parse(visited),
+                Latitude = latitude,
+                Longitude = longitude,
+            };
 
-            // Reload from disk so the refreshed album keeps its absolute path and
-            // its photos, then rewrite markers.json so a moved pin is reflected on
-            // the map. The old code built `new Album(slug, ...)`, which set a
-            // relative path and an empty photo list, and never touched markers.json.
-            _ac.ReloadFromDisk(path);
+            await _store.WriteMetadataAsync(slug, albumMetaData);
+
+            // Reload from the store so the refreshed album keeps its photos, then
+            // rewrite the markers so a moved pin is reflected on the map.
+            _ac.ReloadAlbum(slug);
             await _ac.WriteMarkersAsync();
 
             return new RedirectResult($"~/album/{slug}/");
@@ -173,39 +152,44 @@ namespace GlaaTrips.Pages
             foreach (var file in files.Where(f => _ac.IsImageFile(f.FileName)))
             {
                 string fileName = Path.GetFileName(file.FileName);
-                string filePath = Path.Combine(_environment.WebRootPath, "albums", album.Id, Path.GetFileName(fileName));
 
-                if (System.IO.File.Exists(filePath))
+                if (_store.PhotoExists(album.Id, fileName))
                 {
-                    filePath = Path.ChangeExtension(filePath, file.GetHashCode() + Path.GetExtension(filePath));
+                    // Keep both when a name collides, mirroring the previous
+                    // behaviour of tagging the duplicate with the upload's hash.
+                    fileName = $"{Path.GetFileNameWithoutExtension(fileName)}.{file.GetHashCode()}{Path.GetExtension(fileName)}";
                 }
 
                 // Persist the original first, then derive thumbnails from the saved
-                // file. The previous order truncated the destination file, generated
-                // thumbnails from the upload stream, and only then wrote the original,
-                // so a decode failure left an orphaned zero-byte image behind.
-                using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                // file, so a decode failure never leaves a half-written original
+                // masquerading as a real photo.
+                using (var uploadStream = file.OpenReadStream())
                 {
-                    await file.CopyToAsync(fileStream);
+                    await _store.SavePhotoAsync(album.Id, fileName, uploadStream);
                 }
 
-                bool created;
+                IReadOnlyList<GeneratedThumbnail> thumbnails;
 
-                using (var savedImage = System.IO.File.OpenRead(filePath))
+                using (var savedImage = _store.OpenPhoto(album.Id, fileName))
                 {
-                    created = _processor.CreateThumbnails(savedImage, filePath);
+                    thumbnails = _processor.CreateThumbnails(savedImage, fileName);
                 }
 
-                if (!created)
+                if (thumbnails.Count == 0)
                 {
                     // The bytes were not a decodable image despite the extension;
-                    // drop the saved original and skip it — consistent with how a
-                    // non-image extension is skipped above — rather than 500.
-                    System.IO.File.Delete(filePath);
+                    // drop the saved original and skip it rather than 500.
+                    await _store.DeletePhotoAsync(album.Id, fileName);
                     continue;
                 }
 
-                uploaded.Add(new Photo(album, new FileInfo(filePath)));
+                foreach (var thumbnail in thumbnails)
+                {
+                    using var thumbnailStream = new MemoryStream(thumbnail.Content);
+                    await _store.SaveThumbnailAsync(album.Id, thumbnail.FileName, thumbnailStream);
+                }
+
+                uploaded.Add(new Photo(album, fileName));
             }
 
             album.AddPhotos(uploaded);

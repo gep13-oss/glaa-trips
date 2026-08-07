@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
 
 namespace GlaaTrips.Models
 {
@@ -17,27 +14,45 @@ namespace GlaaTrips.Models
     /// swaps the <see cref="Albums"/> reference (copy-on-write). A reader only ever
     /// sees a fully-published list that is never mutated in place, so it cannot
     /// throw a "collection was modified" error or observe a half-applied change.
+    /// The album content itself is read from and written to an
+    /// <see cref="IPhotoStore"/>, so the catalogue is independent of where photos
+    /// physically live (local disk in development, Azure Blob in production).
     /// </summary>
     public class AlbumCollection
     {
-        private readonly IWebHostEnvironment _environment;
+        private readonly IPhotoStore _store;
         private readonly object _sync = new object();
-        private static readonly string[] _extensions = { ".jpg", ".jpeg", ".gif", ".png" };
 
-        public AlbumCollection(IWebHostEnvironment environment)
+        public AlbumCollection(IPhotoStore store)
         {
-            _environment = environment;
+            _store = store;
             Albums = new List<Album>();
 
-            Initialize(environment.WebRootPath);
+            Initialize();
         }
 
         public List<Album> Albums { get; private set; }
 
+        /// <summary>
+        /// Gets the store backing this catalogue. Used by <see cref="Album"/> and
+        /// <see cref="Photo"/> to resolve the public URLs their content is served
+        /// from.
+        /// </summary>
+        internal IPhotoStore Store => _store;
+
         public bool IsImageFile(string file)
         {
-            string ext = Path.GetExtension(file);
-            return _extensions.Contains(ext, StringComparer.OrdinalIgnoreCase);
+            return PhotoStoreConventions.IsImageFile(file);
+        }
+
+        /// <summary>
+        /// Gets the public URL the map's marker file is served from, for the home
+        /// page to hand to the client-side map script.
+        /// </summary>
+        /// <returns>The marker file URL.</returns>
+        public string MarkersUrl()
+        {
+            return _store.MarkersUrl();
         }
 
         /// <summary>
@@ -68,16 +83,15 @@ namespace GlaaTrips.Models
         }
 
         /// <summary>
-        /// Reloads a single album from disk (its metadata and its photos) and swaps
-        /// the fresh instance into the collection, replacing any existing album with
-        /// the same id. This is how an edit that rewrote the album's
-        /// <c>data.json</c> is reflected without losing the album's photos or its
-        /// absolute path.
+        /// Reloads a single album from the store (its metadata and its photos) and
+        /// swaps the fresh instance into the collection, replacing any existing
+        /// album with the same id. This is how an edit that rewrote the album's
+        /// metadata is reflected without losing the album's photos.
         /// </summary>
-        /// <param name="absoluteAlbumPath">The absolute path of the album folder to reload.</param>
-        public void ReloadFromDisk(string absoluteAlbumPath)
+        /// <param name="albumId">The id of the album to reload.</param>
+        public void ReloadAlbum(string albumId)
         {
-            var reloaded = GetAlbum(absoluteAlbumPath);
+            var reloaded = GetAlbum(albumId);
 
             lock (_sync)
             {
@@ -90,11 +104,11 @@ namespace GlaaTrips.Models
         }
 
         /// <summary>
-        /// Rewrites <c>markers.json</c> from the current album set so the map stays
-        /// in step after a create, edit or delete. The marker list is snapshotted
-        /// under the lock; the file write happens outside it.
+        /// Rewrites the marker file from the current album set so the map stays in
+        /// step after a create, edit or delete. The marker list is snapshotted
+        /// under the lock; the store write happens outside it.
         /// </summary>
-        /// <returns>A task that completes when the file has been written.</returns>
+        /// <returns>A task that completes when the marker file has been written.</returns>
         public async Task WriteMarkersAsync()
         {
             List<Marker> markers;
@@ -106,26 +120,14 @@ namespace GlaaTrips.Models
                     .ToList();
             }
 
-            string markerJsonPath = Path.Combine(_environment.WebRootPath, "albums", "markers.json");
-
-            using var createStream = File.Create(markerJsonPath);
-            await JsonSerializer.SerializeAsync(createStream, markers);
+            await _store.WriteMarkersAsync(markers);
         }
 
-        private void Initialize(string contentPath)
+        private void Initialize()
         {
-            var root = Path.Combine(contentPath, "albums");
-            if (!Directory.Exists(root))
-            {
-                return;
-            }
-
-            var albums = new List<Album>();
-
-            foreach (string albumPath in Directory.EnumerateDirectories(root))
-            {
-                albums.Add(GetAlbum(albumPath));
-            }
+            var albums = _store.ListAlbumIds()
+                .Select(GetAlbum)
+                .ToList();
 
             Albums = InDisplayOrder(albums);
         }
@@ -140,25 +142,13 @@ namespace GlaaTrips.Models
                 .ToList();
         }
 
-        private Album GetAlbum(string albumPath)
+        private Album GetAlbum(string albumId)
         {
-            var metadataFileName = Path.Combine(albumPath, "data.json");
-            Album album;
+            var metadata = _store.TryReadMetadata(albumId);
+            var album = new Album(albumId, this, metadata);
 
-            if (File.Exists(metadataFileName))
-            {
-                var albumMetaData = JsonSerializer.Deserialize<AlbumMetaData>(File.ReadAllText(metadataFileName));
-                album = new Album(albumPath, this, albumMetaData);
-            }
-            else
-            {
-                album = new Album(albumPath, this);
-            }
-
-            var directory = new DirectoryInfo(albumPath);
-            var photos = directory.EnumerateFiles()
-                .Where(f => IsImageFile(f.FullName))
-                .Select(a => new Photo(album, a));
+            var photos = _store.ListPhotoFileNames(albumId)
+                .Select(fileName => new Photo(album, fileName));
 
             album.AddPhotos(photos);
 

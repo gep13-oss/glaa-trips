@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 
 namespace GlaaTrips.Models
@@ -11,16 +10,15 @@ namespace GlaaTrips.Models
         private readonly AlbumCollection _ac;
         private readonly object _sync = new object();
 
-        public Album(string absolutePath, AlbumCollection ac)
-            : this(absolutePath, ac, null)
+        public Album(string id, AlbumCollection ac)
+            : this(id, ac, null)
         {
         }
 
-        public Album(string absolutePath, AlbumCollection ac, AlbumMetaData metaData)
+        public Album(string id, AlbumCollection ac, AlbumMetaData metaData)
         {
             _ac = ac;
-            AbsolutePath = absolutePath;
-            Id = new DirectoryInfo(AbsolutePath).Name;
+            Id = id;
             Photos = new List<Photo>();
 
             if (metaData != null)
@@ -83,8 +81,6 @@ namespace GlaaTrips.Models
             }
         }
 
-        public string AbsolutePath { get; }
-
         public List<Photo> Photos { get; private set; }
 
         public Photo CoverPhoto
@@ -94,6 +90,12 @@ namespace GlaaTrips.Models
                 return Photos?.FirstOrDefault();
             }
         }
+
+        /// <summary>
+        /// Gets the store the album's content is read from and served through.
+        /// Used by <see cref="Photo"/> to resolve its public URLs.
+        /// </summary>
+        internal IPhotoStore Store => _ac.Store;
 
         public IPaginator Next
         {

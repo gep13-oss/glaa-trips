@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using GlaaTrips.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -13,6 +14,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ---- Services (was Startup.ConfigureServices) ----
 builder.Services.AddRazorPages();
+
+// Album content (photos, thumbnails, metadata, markers) is read and written
+// through an IPhotoStore, selected by configuration. The default is the local
+// disk store used in development and tests; production selects the Azure Blob
+// store so content survives redeploys and can be served from a CDN.
+builder.Services.AddSingleton<IPhotoStore>(sp =>
+{
+    var environment = sp.GetRequiredService<IWebHostEnvironment>();
+    string webRoot = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
+    string albumsRoot = Path.Combine(webRoot, "albums");
+    return new LocalDiskPhotoStore(albumsRoot);
+});
+
 builder.Services.AddSingleton<AlbumCollection>();
 builder.Services.AddSingleton<ImageProcessor>();
 builder.Services.AddAuthentication(options =>

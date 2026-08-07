@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using SkiaSharp;
 
@@ -9,19 +10,23 @@ namespace GlaaTrips.Models
         private const int Quality = 75;
 
         /// <summary>
-        /// Generates the thumbnail set for a saved image.
+        /// Generates the thumbnail set for an image. The processor is storage
+        /// agnostic: it decodes the source, produces one resized image per
+        /// <see cref="ImageType"/> and returns each as named bytes for the caller
+        /// to persist through an <see cref="IPhotoStore"/>. It performs no I/O of
+        /// its own.
         /// </summary>
         /// <param name="imageStream">A readable stream over the source image bytes.</param>
-        /// <param name="filePath">The saved image whose thumbnails are produced.</param>
-        /// <returns><c>true</c> when thumbnails were generated; <c>false</c> when the
-        /// stream does not contain an image SkiaSharp can decode.</returns>
-        public bool CreateThumbnails(Stream imageStream, string filePath)
+        /// <param name="fileName">The original photo's file name, used to derive the thumbnail names and format.</param>
+        /// <returns>The generated thumbnails; an empty list when the stream does not
+        /// contain an image SkiaSharp can decode.</returns>
+        public IReadOnlyList<GeneratedThumbnail> CreateThumbnails(Stream imageStream, string fileName)
         {
-            string dir = Path.Combine(Path.GetDirectoryName(filePath), "thumbnail");
-            string displayName = Path.GetFileNameWithoutExtension(filePath);
-            string ext = Path.GetExtension(filePath);
+            string displayName = Path.GetFileNameWithoutExtension(fileName);
+            string ext = Path.GetExtension(fileName);
+            var format = GetFormat(fileName);
 
-            var format = GetFormat(filePath);
+            var thumbnails = new List<GeneratedThumbnail>();
 
             using (var inputStream = new SKManagedStream(imageStream))
             using (var codec = SKCodec.Create(inputStream))
@@ -32,17 +37,15 @@ namespace GlaaTrips.Models
                 // dereferencing null (which surfaced as a 500 on upload).
                 if (codec == null)
                 {
-                    return false;
+                    return thumbnails;
                 }
 
                 using (var original = SKBitmap.Decode(codec))
                 {
                     if (original == null)
                     {
-                        return false;
+                        return thumbnails;
                     }
-
-                    Directory.CreateDirectory(dir);
 
                     using (var image = HandleOrientation(original, codec.EncodedOrigin))
                     {
@@ -51,22 +54,20 @@ namespace GlaaTrips.Models
                             int width = (int)type;
                             int height = (int)Math.Round(width * ((float)image.Height / image.Width));
 
-                            string thumbnailPath = Path.Combine(dir, $"{displayName}-{width}x{height}{ext}");
                             var info = new SKImageInfo(width, height);
 
                             using (var resized = image.Resize(info, SKFilterQuality.High))
                             using (var thumb = SKImage.FromBitmap(resized))
-                            using (var fs = new FileStream(thumbnailPath, FileMode.CreateNew, FileAccess.ReadWrite))
+                            using (var data = thumb.Encode(format, Quality))
                             {
-                                thumb.Encode(format, Quality)
-                                     .SaveTo(fs);
+                                thumbnails.Add(new GeneratedThumbnail($"{displayName}-{width}x{height}{ext}", data.ToArray()));
                             }
                         }
                     }
                 }
             }
 
-            return true;
+            return thumbnails;
         }
 
         private static SKEncodedImageFormat GetFormat(string fileName)
