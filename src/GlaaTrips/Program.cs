@@ -16,16 +16,35 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
 // Album content (photos, thumbnails, metadata, markers) is read and written
-// through an IPhotoStore, selected by configuration. The default is the local
-// disk store used in development and tests; production selects the Azure Blob
-// store so content survives redeploys and can be served from a CDN.
-builder.Services.AddSingleton<IPhotoStore>(sp =>
+// through an IPhotoStore, selected by configuration ("Storage:Provider"). The
+// default is the local disk store used in development and tests; production
+// selects the Azure Blob store so content survives redeploys and can be served
+// from a CDN.
+if (string.Equals(builder.Configuration["Storage:Provider"], "AzureBlob", StringComparison.OrdinalIgnoreCase))
 {
-    var environment = sp.GetRequiredService<IWebHostEnvironment>();
-    string webRoot = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
-    string albumsRoot = Path.Combine(webRoot, "albums");
-    return new LocalDiskPhotoStore(albumsRoot);
-});
+    builder.Services.AddSingleton<IPhotoStore>(sp =>
+    {
+        var configuration = sp.GetRequiredService<IConfiguration>();
+        string connectionString = configuration["Storage:AzureBlob:ConnectionString"];
+        string containerName = configuration["Storage:AzureBlob:ContainerName"];
+        string publicBaseUrl = configuration["Storage:AzureBlob:PublicBaseUrl"];
+
+        return new AzureBlobPhotoStore(
+            connectionString,
+            string.IsNullOrWhiteSpace(containerName) ? "albums" : containerName,
+            publicBaseUrl);
+    });
+}
+else
+{
+    builder.Services.AddSingleton<IPhotoStore>(sp =>
+    {
+        var environment = sp.GetRequiredService<IWebHostEnvironment>();
+        string webRoot = environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
+        string albumsRoot = Path.Combine(webRoot, "albums");
+        return new LocalDiskPhotoStore(albumsRoot);
+    });
+}
 
 builder.Services.AddSingleton<AlbumCollection>();
 builder.Services.AddSingleton<ImageProcessor>();

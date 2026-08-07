@@ -20,7 +20,12 @@
         attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
     }).addTo(map);
 
-    fetch("albums/markers.json")
+    // The marker file's URL is provided by the server (the photo store): a
+    // root-relative /albums/markers.json for local disk, or a CDN/blob URL when
+    // content is stored in Azure Blob. Fall back to the local path if absent.
+    const markersUrl = mapElement.dataset.markersUrl || "/albums/markers.json";
+
+    fetch(markersUrl)
         .then((response) => response.json())
         .then(plotMarkers)
         .catch(() => map.setView([20, 0], 2));
