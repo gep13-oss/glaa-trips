@@ -8,3 +8,18 @@ updates:
     directory: /
     schedule:
       interval: weekly
+
+  # NuGet packages across the solution (app + test projects). Each update PR
+  # runs the full CI gate (build + unit + Playwright), so a breaking bump is
+  # caught before it can be merged.
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # SkiaSharp and its Linux native-assets package must move together (same
+      # version), so bump them in a single PR rather than two that could land
+      # out of step.
+      skiasharp:
+        patterns:
+          - "SkiaSharp*"
