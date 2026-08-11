@@ -65,6 +65,32 @@ namespace GlaaTrips.UITests
             });
         }
 
+        [Test]
+        public async Task Creating_an_album_whose_name_collides_with_an_existing_slug_is_rejected()
+        {
+            await SignInAsync();
+            await Page.GotoAsync(BaseUrl + "/");
+
+            // The seeded album already owns the "sample-trip" slug. A new trip whose
+            // title slugs to the same value must be refused, not written over the
+            // existing album (which would clobber its metadata and duplicate it).
+            await Page.FillAsync("#name", ServerFixture.SampleAlbumTitle);
+            await Page.FillAsync("#visited", "2019-03-03");
+            await Page.FillAsync("#latitude", "10");
+            await Page.FillAsync("#longitude", "20");
+
+            var response = await Page.RunAndWaitForResponseAsync(
+                () => Page.ClickAsync("#newalbum"),
+                r => r.Request.Method == "POST" && r.Url.Contains("/album/new/create"));
+
+            Assert.That(response.Status, Is.EqualTo(409), "a duplicate-slug create should be rejected with 409 Conflict");
+
+            // The original album must still be present and reachable — proof the
+            // rejected create did not overwrite it.
+            var existing = await Page.APIRequest.GetAsync($"{BaseUrl}/album/{ServerFixture.SampleAlbumSlug}/");
+            Assert.That(existing.Status, Is.EqualTo(200), "the existing album should be untouched by the rejected create");
+        }
+
         private sealed class MarkerDto
         {
             public double Lat { get; set; }

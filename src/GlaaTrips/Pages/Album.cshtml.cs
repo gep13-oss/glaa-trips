@@ -74,6 +74,21 @@ namespace GlaaTrips.Pages
                 return BadRequest();
             }
 
+            // The slug doubles as the album's storage folder id. Two titles that
+            // slug to the same value (e.g. an identical name, or "Dunnottar Castle"
+            // vs "Dunnottar, Castle") would otherwise write metadata over the
+            // existing album — clobbering its details and leaving a duplicate in the
+            // catalogue. Reject the create so the admin picks a distinct title; the
+            // existing album is left untouched. Two trips to one place therefore
+            // need distinct titles (e.g. include the year).
+            bool alreadyExists = _store.AlbumExists(slugName)
+                || _ac.Albums.Any(a => a.Id.Equals(slugName, StringComparison.OrdinalIgnoreCase));
+
+            if (alreadyExists)
+            {
+                return StatusCode(StatusCodes.Status409Conflict, $"An album with the name “{name}” already exists. Please choose a different title.");
+            }
+
             var albumMetaData = new AlbumMetaData
             {
                 DisplayName = name,
