@@ -23,9 +23,9 @@
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 
-var solution = "./GlaaTrips.slnx";
-var unitTestProject = "./tests/GlaaTrips.UnitTests/GlaaTrips.UnitTests.csproj";
-var uiTestProject = "./tests/GlaaTrips.UITests/GlaaTrips.UITests.csproj";
+var solution = "./AalgTrips.slnx";
+var unitTestProject = "./tests/AalgTrips.UnitTests/AalgTrips.UnitTests.csproj";
+var uiTestProject = "./tests/AalgTrips.UITests/AalgTrips.UITests.csproj";
 var testTfm = "net10.0";
 
 Task("Clean")
@@ -47,7 +47,7 @@ Task("Install-Playwright")
     .IsDependentOn("Build")
     .Does(() =>
     {
-        var script = $"./tests/GlaaTrips.UITests/bin/{configuration}/{testTfm}/playwright.ps1";
+        var script = $"./tests/AalgTrips.UITests/bin/{configuration}/{testTfm}/playwright.ps1";
         if (!FileExists(script))
         {
             throw new Exception(

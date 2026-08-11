@@ -239,7 +239,7 @@ orleans.codegen.cs
 #bower_components/
 
 # Client-side libraries restored by LibMan (libman.json) — not committed.
-# (**/ so it matches src/GlaaTrips/wwwroot/lib, not just a root-level wwwroot.)
+# (**/ so it matches src/AalgTrips/wwwroot/lib, not just a root-level wwwroot.)
 **/wwwroot/lib/
 
 # Runtime album content: originals, generated thumbnails, data.json and the

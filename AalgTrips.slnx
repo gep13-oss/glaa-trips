@@ -1,0 +1,12 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/tests/">
+    <Project Path="tests/AalgTrips.UITests/AalgTrips.UITests.csproj" />
+    <Project Path="tests/AalgTrips.UnitTests/AalgTrips.UnitTests.csproj" />
+  </Folder>
+  <Project Path="src/AalgTrips/AalgTrips.csproj" />
+</Solution>

@@ -41,13 +41,13 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Build
-        run: dotnet build GlaaTrips.slnx -c Release
+        run: dotnet build AalgTrips.slnx -c Release
 
       # The UI tests drive a real browser, so install Chromium (with its OS
       # dependencies) before running them. The playwright.ps1 script is produced
       # when the UITests project is built (step above).
       - name: Install Playwright (Chromium + OS deps)
-        run: pwsh tests/GlaaTrips.UITests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+        run: pwsh tests/AalgTrips.UITests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
 
       # Runs the format gate, unit tests and the Playwright UI tests, matching
       # the local gate. (The Azure Blob store tests stay skipped without a
@@ -56,7 +56,7 @@ jobs:
         run: dotnet cake.cs --target=Test
 
       - name: Publish
-        run: dotnet publish src/GlaaTrips/GlaaTrips.csproj -c Release -o ${{ github.workspace }}/publish
+        run: dotnet publish src/AalgTrips/AalgTrips.csproj -c Release -o ${{ github.workspace }}/publish
 
       - name: Upload published app
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

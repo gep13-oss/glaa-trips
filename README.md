@@ -44,7 +44,7 @@ passwords be spotted and lets an attacker attack every account at once).
 3. **Store the account.** The username is the configuration key; set its salt,
    hash and role (`viewer` or `admin`).
 
-   Development (run from `src/GlaaTrips`):
+   Development (run from `src/AalgTrips`):
 
    ```powershell
    dotnet user-secrets set "Users:alice:salt"     "<salt from step 1>"
