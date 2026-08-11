@@ -135,7 +135,12 @@ app.MapGet("/albums/{**key}", (string key, IPhotoStore store, HttpContext http) 
         return Results.NotFound();
     }
 
-    http.Response.Headers[HeaderNames.CacheControl] = "private, max-age=86400";
+    // Photos and thumbnails are immutable under a given key (a new photo always
+    // takes a new name), so they can be cached hard. markers.json is the
+    // exception: it is rewritten on every album create/edit/delete, so a long
+    // cache would leave the map showing a stale pin set — revalidate it instead.
+    bool isMarkers = key.Equals(PhotoStoreConventions.MarkersFileName, StringComparison.OrdinalIgnoreCase);
+    http.Response.Headers[HeaderNames.CacheControl] = isMarkers ? "no-cache" : "private, max-age=86400";
     return Results.Stream(content, ContentTypeForKey(key));
 }).RequireAuthorization();
 
