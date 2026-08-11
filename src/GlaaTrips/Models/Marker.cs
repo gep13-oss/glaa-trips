@@ -17,17 +17,17 @@ namespace GlaaTrips.Models
 
         public string Slug { get; set; }
 
-        /// <summary>The album's display name, shown as the tooltip heading.</summary>
+        /// <summary>Gets or sets the album's display name, shown as the tooltip heading.</summary>
         public string Name { get; set; }
 
         /// <summary>
-        /// The trip date pre-formatted for display (e.g. <c>Jan 2026</c>). Formatted
-        /// server-side in the invariant culture so the client needs no date parsing
-        /// and the label is stable regardless of the viewer's locale.
+        /// Gets or sets the trip date pre-formatted for display (e.g. <c>Jan 2026</c>).
+        /// Formatted server-side in the invariant culture so the client needs no date
+        /// parsing and the label is stable regardless of the viewer's locale.
         /// </summary>
         public string Date { get; set; }
 
-        /// <summary>The number of photos in the album, shown in the tooltip.</summary>
+        /// <summary>Gets or sets the number of photos in the album, shown in the tooltip.</summary>
         public int Photos { get; set; }
     }
 }
