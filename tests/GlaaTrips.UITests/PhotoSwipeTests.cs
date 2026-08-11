@@ -73,6 +73,47 @@ namespace GlaaTrips.UITests
             Assert.That(lightbox.Ok, Is.True, "photoswipe-lightbox.esm.min.js should be served from wwwroot/lib");
         }
 
+        [Test]
+        public async Task Arrow_keys_stay_in_the_lightbox_instead_of_jumping_to_another_album()
+        {
+            await SignInAsync();
+
+            // Give the sample album a neighbour so its prev/next-album link — the one
+            // the old global key handler followed — is actually rendered in the pager.
+            var token = await AntiforgeryTokenAsync("/");
+            await Page.APIRequest.PostAsync(
+                $"{BaseUrl}/album/new/create/",
+                FormPost(token, ("name", "Arrow Neighbour"), ("visited", "2025-01-01"), ("latitude", "10"), ("longitude", "20")));
+
+            var photoLink = await UploadSamplePhotoAsync("arrow-shot.png");
+
+            try
+            {
+                await Page.GotoAsync($"{BaseUrl}/album/{ServerFixture.SampleAlbumSlug}/");
+
+                // The pager now renders an adjacent-album link: proof the old hijack could fire.
+                await Expect(Page.Locator("a[rel=next], a[rel=prev]").First).ToBeVisibleAsync();
+                await Expect(Page.Locator("#gallery[data-pswp-ready]")).ToHaveCountAsync(1);
+
+                await Page.Locator($"#gallery a[href='{photoLink}']").ClickAsync();
+                await Expect(Page.Locator(".pswp")).ToBeVisibleAsync();
+
+                await Page.Keyboard.PressAsync("ArrowRight");
+                await Page.Keyboard.PressAsync("ArrowLeft");
+
+                // The arrows stayed inside the lightbox rather than following the album
+                // link, so we are still on the same album with the lightbox open.
+                await Expect(Page.Locator(".pswp")).ToBeVisibleAsync();
+                await Expect(Page).ToHaveURLAsync(new Regex($"/album/{ServerFixture.SampleAlbumSlug}/"));
+            }
+            finally
+            {
+                await DeletePhotoAsync(photoLink);
+                var deleteToken = await AntiforgeryTokenAsync("/");
+                await Page.APIRequest.PostAsync($"{BaseUrl}/album/arrow-neighbour/delete", FormPost(deleteToken));
+            }
+        }
+
         private async Task<string> UploadSamplePhotoAsync(string fileName)
         {
             await SignInAsync();

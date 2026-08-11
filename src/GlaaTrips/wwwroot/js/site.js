@@ -16,19 +16,29 @@
         }
     }
 
-    // Keyboard navigation
-    const keyMap = {
-        37: document.querySelector("a[rel=prev]"), // left
-        39: document.querySelector("a[rel=next]") // right
-    };
+    // Keyboard navigation: left/right follow the page's prev/next links. Wire this
+    // up ONLY on pages without the album gallery — i.e. the standalone per-photo
+    // page, where prev/next are the neighbouring photos. On the album page those
+    // links point at adjacent albums (jumping trips is not what an arrow press
+    // should do), and its PhotoSwipe lightbox handles left/right photo navigation
+    // itself, so binding here would hijack the arrows out of the lightbox.
+    if (!document.getElementById("gallery")) {
+        const keyMap = {
+            37: document.querySelector("a[rel=prev]"), // left
+            39: document.querySelector("a[rel=next]") // right
+        };
 
-    window.addEventListener("keyup", (e) => {
-        if (e.altKey || e.shiftKey || e.ctrlKey)
-            return;
+        window.addEventListener("keyup", (e) => {
+            if (e.altKey || e.shiftKey || e.ctrlKey) {
+                return;
+            }
 
-        if (link = keyMap[e.keyCode]) {
-            location.href = link.href;
-        }
-    }, false);
+            const link = keyMap[e.keyCode];
+
+            if (link) {
+                location.href = link.href;
+            }
+        }, false);
+    }
 
 })();
