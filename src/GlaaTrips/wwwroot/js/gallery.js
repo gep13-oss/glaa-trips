@@ -69,8 +69,11 @@ if (gallery) {
             isButton: true,
             title: "Copy link to this photo",
             html:
+                // Fill with the primary icon colour (white) like PhotoSwipe's own
+                // icons; "currentColor" here resolves to the dark secondary colour
+                // .pswp__icn sets, which left the icon looking washed out.
                 '<svg class="pswp__icn" viewBox="0 0 24 24" aria-hidden="true">' +
-                '<path fill="currentColor" d="M8.5 12a3 3 0 0 1 3-3H15V7h-3.5a5 5 0 0 0 0 10H15v-2h-3.5a3 3 0 0 1-3-3zm3-1h7v2h-7v-2zM20.5 7H17v2h3.5a3 3 0 0 1 0 6H17v2h3.5a5 5 0 0 0 0-10z"/>' +
+                '<path fill="var(--pswp-icon-color)" d="M8.5 12a3 3 0 0 1 3-3H15V7h-3.5a5 5 0 0 0 0 10H15v-2h-3.5a3 3 0 0 1-3-3zm3-1h7v2h-7v-2zM20.5 7H17v2h3.5a3 3 0 0 1 0 6H17v2h3.5a5 5 0 0 0 0-10z"/>' +
                 "</svg>",
             onClick: (event, el, pswp) => {
                 const name = photoName(pswp.currIndex);
