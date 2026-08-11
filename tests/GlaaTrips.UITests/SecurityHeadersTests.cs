@@ -26,9 +26,11 @@ namespace GlaaTrips.UITests
                 Assert.That(headers.GetValueOrDefault("cross-origin-resource-policy"), Is.EqualTo("same-origin"));
                 Assert.That(headers, Does.ContainKey("permissions-policy"));
 
-                // Safe baseline is enforced; the strict resource policy rides in Report-Only.
-                Assert.That(headers.GetValueOrDefault("content-security-policy"), Does.Contain("frame-ancestors 'none'"));
-                Assert.That(headers.GetValueOrDefault("content-security-policy-report-only"), Does.Contain("script-src 'self'"));
+                // The strict resource policy is enforced (no longer Report-Only).
+                var csp = headers.GetValueOrDefault("content-security-policy");
+                Assert.That(csp, Does.Contain("frame-ancestors 'none'"));
+                Assert.That(csp, Does.Contain("script-src 'self'"));
+                Assert.That(headers, Does.Not.ContainKey("content-security-policy-report-only"));
             });
         }
     }

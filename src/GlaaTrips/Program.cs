@@ -99,12 +99,11 @@ var app = builder.Build();
 // response — static files, the authenticated media endpoint, Razor pages and
 // error responses alike — by sitting at the front of the pipeline. web.config's
 // header block is an IIS concept and is ignored on Linux App Service, so the
-// headers are set here instead. A safe baseline CSP is enforced now; the
-// stricter resource policy ships in Report-Only so any violation surfaces in the
-// browser console before it is switched to enforcing.
-const string cspEnforced =
-    "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'";
-const string cspReportOnly =
+// headers are set here instead. The CSP was rolled out in Report-Only first and
+// is now enforced: the site loads no inline scripts and only OpenStreetMap tiles
+// cross-origin, so script-src can stay 'self' (style-src keeps 'unsafe-inline'
+// because Leaflet/PhotoSwipe set inline styles).
+const string contentSecurityPolicy =
     "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
     "form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: https://tile.openstreetmap.org; font-src 'self'; " +
@@ -113,8 +112,7 @@ const string cspReportOnly =
 app.Use(async (context, next) =>
 {
     var headers = context.Response.Headers;
-    headers["Content-Security-Policy"] = cspEnforced;
-    headers["Content-Security-Policy-Report-Only"] = cspReportOnly;
+    headers["Content-Security-Policy"] = contentSecurityPolicy;
     headers["X-Content-Type-Options"] = "nosniff";
     headers["X-Frame-Options"] = "DENY";
     headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
