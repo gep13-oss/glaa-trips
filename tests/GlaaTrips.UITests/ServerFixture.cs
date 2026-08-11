@@ -162,7 +162,7 @@ namespace GlaaTrips.UITests
             };
             File.WriteAllText(Path.Combine(album, "data.json"), JsonSerializer.Serialize(meta));
 
-            var markers = new[] { new { Lat = 55.953251, Long = -3.188267, Slug = SampleAlbumSlug } };
+            var markers = new[] { new { Lat = 55.953251, Long = -3.188267, Slug = SampleAlbumSlug, Name = SampleAlbumTitle, Date = "Jan 2026", Photos = 0 } };
             File.WriteAllText(Path.Combine(albums, "markers.json"), JsonSerializer.Serialize(markers));
         }
 

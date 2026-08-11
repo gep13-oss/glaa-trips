@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -116,7 +117,15 @@ namespace GlaaTrips.Models
             lock (_sync)
             {
                 markers = Albums
-                    .Select(a => new Marker { Lat = a.Latitude, Long = a.Longitude, Slug = a.Id })
+                    .Select(a => new Marker
+                    {
+                        Lat = a.Latitude,
+                        Long = a.Longitude,
+                        Slug = a.Id,
+                        Name = a.DisplayName,
+                        Date = a.Visited.ToString("MMM yyyy", CultureInfo.InvariantCulture),
+                        Photos = a.Photos.Count,
+                    })
                     .ToList();
             }
 

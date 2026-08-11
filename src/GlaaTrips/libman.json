@@ -24,6 +24,15 @@
         "photoswipe-lightbox.esm.min.js",
         "photoswipe.css"
       ]
+    },
+    {
+      "library": "leaflet.markercluster@1.5.3",
+      "destination": "wwwroot/lib/leaflet.markercluster/",
+      "files": [
+        "leaflet.markercluster.js",
+        "MarkerCluster.css",
+        "MarkerCluster.Default.css"
+      ]
     }
   ]
 }

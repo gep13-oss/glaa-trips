@@ -327,6 +327,22 @@ img {
     font: inherit;
 }
 
+/* Hover tooltip on a map pin: trip name over a muted date · photo-count line. */
+.map-tip {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+}
+
+.map-tip__name {
+    font-weight: 600;
+}
+
+.map-tip__meta {
+    font-size: 0.85em;
+    opacity: 0.75;
+}
+
 /* ---- Section heading ---------------------------------------------------- */
 
 .section-head {

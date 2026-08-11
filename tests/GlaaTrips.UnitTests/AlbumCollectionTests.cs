@@ -107,7 +107,7 @@ namespace GlaaTrips.UnitTests
         public async Task WriteMarkersAsync_writes_one_marker_per_album_from_the_current_set()
         {
             SeedAlbumOnDisk("edinburgh", "Edinburgh", photoCount: 0, latitude: 55.95, longitude: -3.19);
-            SeedAlbumOnDisk("paris", "Paris", photoCount: 0, latitude: 48.85, longitude: 2.35);
+            SeedAlbumOnDisk("paris", "Paris", photoCount: 2, latitude: 48.85, longitude: 2.35, visited: new DateTime(2026, 1, 15));
             var ac = new AlbumCollection(Store());
 
             await ac.WriteMarkersAsync();
@@ -120,6 +120,12 @@ namespace GlaaTrips.UnitTests
             {
                 Assert.That(paris.Lat, Is.EqualTo(48.85));
                 Assert.That(paris.Long, Is.EqualTo(2.35));
+
+                // The tooltip fields: display name, invariant "MMM yyyy" date, and
+                // the album's photo count travel with each marker.
+                Assert.That(paris.Name, Is.EqualTo("Paris"));
+                Assert.That(paris.Date, Is.EqualTo("Jan 2026"));
+                Assert.That(paris.Photos, Is.EqualTo(2));
             });
         }
 
