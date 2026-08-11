@@ -23,7 +23,7 @@ namespace AalgTrips.UITests
         {
             await Page.GotoAsync(BaseUrl + "/");
 
-            await Expect(Page).ToHaveTitleAsync(new Regex("GLAA Trips"));
+            await Expect(Page).ToHaveTitleAsync(new Regex("AALG Trips"));
 
             // The home page lists one trip card per album, each linking to the
             // album and showing its place name.

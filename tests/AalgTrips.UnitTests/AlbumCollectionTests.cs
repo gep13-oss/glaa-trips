@@ -22,7 +22,7 @@ namespace AalgTrips.UnitTests
         [SetUp]
         public void CreateRoot()
         {
-            _root = Path.Combine(Path.GetTempPath(), "glaa-trips-unit-" + Guid.NewGuid().ToString("N"));
+            _root = Path.Combine(Path.GetTempPath(), "aalg-trips-unit-" + Guid.NewGuid().ToString("N"));
             _albumsRoot = Path.Combine(_root, "albums");
             Directory.CreateDirectory(_albumsRoot);
         }

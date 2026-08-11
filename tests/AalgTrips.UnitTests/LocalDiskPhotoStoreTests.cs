@@ -33,7 +33,7 @@ namespace AalgTrips.UnitTests
 
         protected override IPhotoStore CreateStore()
         {
-            var root = Path.Combine(Path.GetTempPath(), "glaa-store-" + Guid.NewGuid().ToString("N"));
+            var root = Path.Combine(Path.GetTempPath(), "aalg-store-" + Guid.NewGuid().ToString("N"));
             _roots.Add(root);
             return new LocalDiskPhotoStore(Path.Combine(root, "albums"));
         }

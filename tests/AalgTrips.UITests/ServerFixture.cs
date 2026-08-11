@@ -8,11 +8,11 @@ using System.Text.Json;
 namespace AalgTrips.UITests
 {
     /// <summary>
-    /// Boots the migrated glaa-trips app once for the whole test run and tears it
+    /// Boots the migrated aalg-trips app once for the whole test run and tears it
     /// down afterwards. The app is launched as a child process against a private,
     /// seeded web root and with injected test credentials, so the suite is fully
     /// self-contained: `dotnet test` (or the Cake `Test` target) needs nothing
-    /// running beforehand. Set GLAA_TRIPS_BASEURL to point the suite at an already
+    /// running beforehand. Set AALG_TRIPS_BASEURL to point the suite at an already
     /// running instance instead (e.g. a deployed environment).
     /// </summary>
     [SetUpFixture]
@@ -37,7 +37,7 @@ namespace AalgTrips.UITests
         [OneTimeSetUp]
         public async Task StartServer()
         {
-            var external = Environment.GetEnvironmentVariable("GLAA_TRIPS_BASEURL");
+            var external = Environment.GetEnvironmentVariable("AALG_TRIPS_BASEURL");
             if (!string.IsNullOrWhiteSpace(external))
             {
                 BaseUrl = external.TrimEnd('/');
@@ -54,7 +54,7 @@ namespace AalgTrips.UITests
             // diverge), so the app would otherwise serve the developer's real
             // src/AalgTrips/wwwroot/albums instead of the seed. Isolating the whole
             // content root avoids that entirely.
-            _tempContentRoot = Path.Combine(Path.GetTempPath(), "glaa-trips-tests-" + Guid.NewGuid().ToString("N"));
+            _tempContentRoot = Path.Combine(Path.GetTempPath(), "aalg-trips-tests-" + Guid.NewGuid().ToString("N"));
             SeedContentRoot(_tempContentRoot, Path.Combine(webDir, "wwwroot"));
 
             var port = GetFreePort();

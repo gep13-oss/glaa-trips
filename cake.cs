@@ -2,7 +2,7 @@
 #:property EnableDefaultEmbeddedResourceItems=false
 #:property EnableDefaultContentItems=false
 
-// glaa-trips build orchestration (Cake.Sdk).
+// aalg-trips build orchestration (Cake.Sdk).
 //
 // Targets:
 //   Clean         - remove build outputs (bin/obj) and dotnet-clean the solution
