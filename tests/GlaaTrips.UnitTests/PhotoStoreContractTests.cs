@@ -121,6 +121,30 @@ namespace GlaaTrips.UnitTests
         }
 
         [Test]
+        public async Task Renaming_an_album_moves_all_of_its_content_to_the_new_id()
+        {
+            var store = CreateStore();
+            await store.WriteMetadataAsync(Album, new AlbumMetaData { DisplayName = "Sample" });
+            await store.SavePhotoAsync(Album, "beach.jpg", new MemoryStream(Encoding.UTF8.GetBytes("a")));
+            await store.SaveThumbnailAsync(Album, "beach-190x127.jpg", new MemoryStream(Encoding.UTF8.GetBytes("t")));
+
+            await store.RenameAlbumAsync(Album, "renamed-trip");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(store.AlbumExists("renamed-trip"), Is.True);
+                Assert.That(store.ListPhotoFileNames("renamed-trip"), Does.Contain("beach.jpg"));
+                Assert.That(store.ListThumbnailFileNames("renamed-trip"), Does.Contain("beach-190x127.jpg"));
+                Assert.That(store.TryReadMetadata("renamed-trip")?.DisplayName, Is.EqualTo("Sample"), "metadata moves with the album");
+
+                Assert.That(store.AlbumExists(Album), Is.False, "nothing should be left under the old id");
+                Assert.That(store.ListPhotoFileNames(Album), Is.Empty);
+                Assert.That(store.ListThumbnailFileNames(Album), Is.Empty);
+                Assert.That(store.TryReadMetadata(Album), Is.Null);
+            });
+        }
+
+        [Test]
         public async Task Deleting_an_album_removes_all_of_its_content()
         {
             var store = CreateStore();

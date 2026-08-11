@@ -151,6 +151,78 @@ namespace GlaaTrips.Pages
             return new RedirectResult($"~/album/{slug}/");
         }
 
+        public async Task<IActionResult> OnPostRename([FromRoute(Name = "name")] string slug, string name)
+        {
+            if (RequireAdmin() is { } challenge)
+            {
+                return challenge;
+            }
+
+            // The album slug is the route value; the posted "name" is the new title.
+            // Bind the slug explicitly from the route so the form's "name" field
+            // cannot win, exactly as OnPostEdit does.
+            if (!SafePathHelper.IsValidSegment(slug))
+            {
+                return BadRequest();
+            }
+
+            var existingAlbum = _ac.Albums.FirstOrDefault(a => a.Id.Equals(slug, StringComparison.OrdinalIgnoreCase));
+
+            if (existingAlbum == null)
+            {
+                return NotFound();
+            }
+
+            string newSlug = SlugHelper.GenerateSlug(name);
+
+            // Same guard as create: an empty/all-punctuation title has no safe slug.
+            if (!SafePathHelper.IsValidSegment(newSlug))
+            {
+                return BadRequest();
+            }
+
+            bool slugChanges = !newSlug.Equals(slug, StringComparison.OrdinalIgnoreCase);
+
+            // Refuse to move onto another album's folder — that would overwrite it.
+            if (slugChanges
+                && (_store.AlbumExists(newSlug) || _ac.Albums.Any(a => a.Id.Equals(newSlug, StringComparison.OrdinalIgnoreCase))))
+            {
+                return StatusCode(StatusCodes.Status409Conflict, $"An album with the name “{name}” already exists. Please choose a different title.");
+            }
+
+            // Preserve everything but the (new) display name; the cover, like on edit,
+            // must survive the rename.
+            var albumMetaData = new AlbumMetaData
+            {
+                DisplayName = name,
+                Description = existingAlbum.Description,
+                Visited = existingAlbum.Visited,
+                Latitude = existingAlbum.Latitude,
+                Longitude = existingAlbum.Longitude,
+                CoverPhoto = existingAlbum.CoverPhotoName,
+            };
+
+            if (slugChanges)
+            {
+                // Move the album's content to the new id, then stamp the new title
+                // onto the moved metadata and swap the catalogue entry over.
+                await _store.RenameAlbumAsync(slug, newSlug);
+                await _store.WriteMetadataAsync(newSlug, albumMetaData);
+                _ac.RenameAlbum(slug, newSlug);
+            }
+            else
+            {
+                // The title changed but its slug did not (e.g. only capitalisation):
+                // this is an in-place metadata edit.
+                await _store.WriteMetadataAsync(slug, albumMetaData);
+                _ac.ReloadAlbum(slug);
+            }
+
+            await _ac.WriteMarkersAsync();
+
+            return new RedirectResult($"~/album/{newSlug}/");
+        }
+
         public async Task<IActionResult> OnPostUpload(string name, ICollection<IFormFile> files)
         {
             if (RequireAdmin() is { } challenge)

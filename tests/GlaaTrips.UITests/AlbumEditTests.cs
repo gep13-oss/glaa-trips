@@ -91,6 +91,65 @@ namespace GlaaTrips.UITests
             Assert.That(existing.Status, Is.EqualTo(200), "the existing album should be untouched by the rejected create");
         }
 
+        [Test]
+        public async Task Renaming_an_album_changes_its_slug_url_and_marker()
+        {
+            await SignInAsync();
+
+            try
+            {
+                await Page.GotoAsync(AlbumUrl);
+                await Page.FillAsync("#renameName", "Renamed Sample Trip");
+                await Page.ClickAsync("#btnRename");
+
+                // The rename redirects to the album under its new slug.
+                await Page.WaitForURLAsync(new Regex("/album/renamed-sample-trip/$"));
+
+                var oldUrl = await Page.APIRequest.GetAsync(AlbumUrl);
+                var newUrl = await Page.APIRequest.GetAsync($"{BaseUrl}/album/renamed-sample-trip/");
+                Assert.Multiple(() =>
+                {
+                    Assert.That(oldUrl.Status, Is.EqualTo(404), "the old slug should no longer resolve");
+                    Assert.That(newUrl.Status, Is.EqualTo(200), "the album should be reachable under the new slug");
+                });
+
+                var markers = await ReadMarkersAsync();
+                Assert.Multiple(() =>
+                {
+                    Assert.That(markers.Any(m => m.Slug == "renamed-sample-trip"), Is.True, "the marker should follow the new slug");
+                    Assert.That(markers.Any(m => m.Slug == ServerFixture.SampleAlbumSlug), Is.False, "the old slug's marker should be gone");
+                });
+            }
+            finally
+            {
+                // Restore the sample album's slug so the rest of the suite is unaffected,
+                // whether or not the assertions above passed.
+                await RestoreSampleSlugAsync();
+            }
+        }
+
+        private async Task RestoreSampleSlugAsync()
+        {
+            var renamed = await Page.APIRequest.GetAsync($"{BaseUrl}/album/renamed-sample-trip/");
+            if (renamed.Status != 200)
+            {
+                return;
+            }
+
+            await Page.GotoAsync($"{BaseUrl}/album/renamed-sample-trip/");
+            await Page.FillAsync("#renameName", ServerFixture.SampleAlbumTitle);
+            await Page.ClickAsync("#btnRename");
+            await Page.WaitForURLAsync(new Regex($"/album/{ServerFixture.SampleAlbumSlug}/$"));
+        }
+
+        private async Task<List<MarkerDto>> ReadMarkersAsync()
+        {
+            var response = await Page.APIRequest.GetAsync($"{BaseUrl}/albums/markers.json?nocache={System.Guid.NewGuid():N}");
+            return JsonSerializer.Deserialize<List<MarkerDto>>(
+                await response.TextAsync(),
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        }
+
         private sealed class MarkerDto
         {
             public double Lat { get; set; }

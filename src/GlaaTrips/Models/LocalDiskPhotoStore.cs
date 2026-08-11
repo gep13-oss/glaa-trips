@@ -197,6 +197,20 @@ namespace GlaaTrips.Models
         }
 
         /// <inheritdoc />
+        public Task RenameAlbumAsync(string oldAlbumId, string newAlbumId)
+        {
+            string source = AlbumDir(oldAlbumId);
+            string destination = AlbumDir(newAlbumId);
+
+            if (Directory.Exists(source))
+            {
+                Directory.Move(source, destination);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
         public async Task WriteMarkersAsync(IEnumerable<Marker> markers)
         {
             Directory.CreateDirectory(_root);

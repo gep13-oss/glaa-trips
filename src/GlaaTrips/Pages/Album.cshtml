@@ -44,6 +44,19 @@
         </div>
     </form>
 
+    <form class="trip-form" method="post">
+        <h2 class="trip-form__title">Rename trip</h2>
+        <p class="trip-form__hint">Updates the trip's title <em>and</em> its web address to match. Use this to
+            correct a name whose misspelling is baked into the link; the photos move with it.</p>
+        <div class="field field--place">
+            <label for="renameName">New title</label>
+            <input type="text" name="name" id="renameName" required value="@Model.Album.DisplayName" />
+        </div>
+        <div class="field field--actions">
+            <input type="submit" class="btn" asp-page-handler="rename" data-progress="Renaming…" id="btnRename" value="Rename &amp; fix link" />
+        </div>
+    </form>
+
     <form method="post" class="delete">
         <input type="submit" class="admin-delete" asp-page-handler="delete" id="deletealbum" aria-label="Delete album" title="Delete album" value="Delete trip" />
     </form>

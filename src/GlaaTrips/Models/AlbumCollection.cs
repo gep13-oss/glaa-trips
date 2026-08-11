@@ -105,6 +105,30 @@ namespace GlaaTrips.Models
         }
 
         /// <summary>
+        /// Reflects a completed store rename in the catalogue: the album that was
+        /// under <paramref name="oldId"/> is dropped and the moved album is loaded
+        /// fresh from the store under <paramref name="newId"/>. Both are swapped in a
+        /// single publication so a reader never sees the album twice or not at all.
+        /// The store move must already have happened.
+        /// </summary>
+        /// <param name="oldId">The album's previous id.</param>
+        /// <param name="newId">The album's new id.</param>
+        public void RenameAlbum(string oldId, string newId)
+        {
+            var reloaded = GetAlbum(newId);
+
+            lock (_sync)
+            {
+                var updated = Albums
+                    .Where(a => !a.Id.Equals(oldId, StringComparison.OrdinalIgnoreCase)
+                        && !a.Id.Equals(newId, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                updated.Add(reloaded);
+                Albums = InDisplayOrder(updated);
+            }
+        }
+
+        /// <summary>
         /// Rewrites the marker file from the current album set so the map stays in
         /// step after a create, edit or delete. The marker list is snapshotted
         /// under the lock; the store write happens outside it.

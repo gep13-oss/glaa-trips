@@ -273,6 +273,13 @@ img {
     letter-spacing: -.01em;
 }
 
+.trip-form__hint {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.75;
+}
+
 .trip-form .field--place {
     grid-column: span 3;
 }

@@ -123,6 +123,16 @@ namespace GlaaTrips.Models
         Task RenamePhotoAsync(string albumId, string oldFileName, string newFileName);
 
         /// <summary>
+        /// Renames an album, moving all of its content (metadata, photos and
+        /// thumbnails) from <paramref name="oldAlbumId"/> to
+        /// <paramref name="newAlbumId"/>. The caller guarantees the new id is free.
+        /// </summary>
+        /// <param name="oldAlbumId">The album's current id.</param>
+        /// <param name="newAlbumId">The album's new id.</param>
+        /// <returns>A task that completes when the album has been moved.</returns>
+        Task RenameAlbumAsync(string oldAlbumId, string newAlbumId);
+
+        /// <summary>
         /// Rewrites the map's marker file from the supplied markers.
         /// </summary>
         /// <param name="markers">One marker per album with coordinates.</param>

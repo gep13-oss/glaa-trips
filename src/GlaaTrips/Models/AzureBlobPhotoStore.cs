@@ -190,6 +190,24 @@ namespace GlaaTrips.Models
         }
 
         /// <inheritdoc />
+        public async Task RenameAlbumAsync(string oldAlbumId, string newAlbumId)
+        {
+            string sourcePrefix = oldAlbumId + "/";
+            string destinationPrefix = newAlbumId + "/";
+
+            // Blob storage has no folder move, so each blob under the album's prefix
+            // is server-side copied to the new prefix and then removed. The listing
+            // is materialised first so deleting a source blob does not disturb the
+            // enumeration.
+            foreach (var blob in _container.GetBlobs(BlobTraits.None, BlobStates.None, sourcePrefix, default).ToList())
+            {
+                string destination = destinationPrefix + blob.Name.Substring(sourcePrefix.Length);
+                await CopyBlobAsync(blob.Name, destination);
+                await _container.GetBlobClient(blob.Name).DeleteIfExistsAsync();
+            }
+        }
+
+        /// <inheritdoc />
         public async Task WriteMarkersAsync(IEnumerable<Marker> markers)
         {
             using var stream = new MemoryStream();
