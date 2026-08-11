@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -182,6 +183,19 @@ app.MapGet("/albums/{**key}", (string key, IPhotoStore store, HttpContext http) 
     http.Response.Headers[HeaderNames.CacheControl] = isMarkers ? "no-cache" : "private, max-age=86400";
     return Results.Stream(content, ContentTypeForKey(key));
 }).RequireAuthorization();
+
+// Rebuild the map's marker file from the current album set on startup, so it
+// self-heals if it ever drifts from the albums (for example if content is changed
+// directly in the store) and picks up any marker-schema change after a deploy.
+// A transient store failure must not stop the app from booting.
+try
+{
+    await app.Services.GetRequiredService<AlbumCollection>().WriteMarkersAsync();
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning(ex, "Could not rebuild markers.json on startup.");
+}
 
 app.Run();
 

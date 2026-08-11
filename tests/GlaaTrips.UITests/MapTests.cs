@@ -141,6 +141,43 @@ namespace GlaaTrips.UITests
             Assert.That(body, Does.Contain("/lib/leaflet/leaflet.js"), "the page should load Leaflet");
         }
 
+        [Test]
+        public async Task Startup_rebuilds_markers_and_prunes_drift()
+        {
+            // ServerFixture seeds markers.json with a stale marker for an album that
+            // does not exist; the on-startup rebuild must have replaced the file with
+            // the real album set, dropping the ghost.
+            var response = await Page.APIRequest.GetAsync($"{BaseUrl}/albums/markers.json?nocache={System.Guid.NewGuid():N}");
+            var json = await response.JsonAsync();
+            var slugs = json!.Value.EnumerateArray().Select(m => m.GetProperty("Slug").GetString()).ToArray();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(slugs, Does.Contain(ServerFixture.SampleAlbumSlug), "the real album's marker should be present");
+                Assert.That(slugs, Does.Not.Contain("removed-album"), "the stale marker should be pruned on startup");
+            });
+        }
+
+        [Test]
+        public async Task Map_page_has_no_content_security_policy_violations()
+        {
+            // Collect any CSP violations the browser reports as the map renders, so the
+            // now-enforced policy can't silently start blocking what the map needs.
+            await Page.AddInitScriptAsync(
+                "window.__cspViolations = [];"
+                + "document.addEventListener('securitypolicyviolation',"
+                + " function (e) { window.__cspViolations.push(e.violatedDirective + ' blocked ' + e.blockedURI); });");
+
+            await BlockTilesAsync();
+            await Page.GotoAsync(BaseUrl + "/");
+
+            await Expect(Page.Locator("#map.leaflet-container")).ToBeVisibleAsync();
+            await Expect(Page.Locator(".leaflet-marker-icon").First).ToBeVisibleAsync();
+
+            var violations = await Page.EvaluateAsync<string[]>("() => window.__cspViolations");
+            Assert.That(violations, Is.Empty, "the enforced CSP must not block anything the map needs");
+        }
+
         private Task BlockTilesAsync()
         {
             return Page.RouteAsync("**/tile.openstreetmap.org/**", route => route.AbortAsync());

@@ -162,7 +162,15 @@ namespace GlaaTrips.UITests
             };
             File.WriteAllText(Path.Combine(album, "data.json"), JsonSerializer.Serialize(meta));
 
-            var markers = new[] { new { Lat = 55.953251, Long = -3.188267, Slug = SampleAlbumSlug, Name = SampleAlbumTitle, Date = "Jan 2026", Photos = 0 } };
+            // Seed markers.json with a real marker plus a stale one for an album that
+            // does not exist, so the app's on-startup marker rebuild is exercised: it
+            // must drop the ghost (far from the real album, so it would otherwise show
+            // as a second, separate pin) and keep only the seeded album.
+            var markers = new[]
+            {
+                new { Lat = 55.953251, Long = -3.188267, Slug = SampleAlbumSlug, Name = SampleAlbumTitle, Date = "Jan 2026", Photos = 0 },
+                new { Lat = 51.5, Long = -0.12, Slug = "removed-album", Name = "Removed Album", Date = "Jan 2020", Photos = 3 },
+            };
             File.WriteAllText(Path.Combine(albums, "markers.json"), JsonSerializer.Serialize(markers));
         }
 
