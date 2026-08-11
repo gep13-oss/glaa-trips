@@ -1,4 +1,4 @@
-# glaa-trips
+# aalg-trips
 Family trips that we have been on
 
 ## Access & users
@@ -71,7 +71,7 @@ unaffected.
 The app runs on a **Linux App Service**; album content (photos, thumbnails,
 metadata, markers) lives in a **private Azure Blob container**, not on the
 app's disk, so it survives redeploys and restarts. A GitHub Actions workflow
-(`.github/workflows/main_glaa-trips.yml`) builds, tests and deploys on every
+(`.github/workflows/main_aalg-trips.yml`) builds, tests and deploys on every
 push to `main`, authenticating to Azure with **OIDC** (no publish profile or
 secret stored in GitHub).
 
@@ -145,7 +145,7 @@ fails with *"No matching federated identity record"*.
 $SUBSCRIPTION = az account show --query id -o tsv
 $TENANT = az account show --query tenantId -o tsv
 
-$APP_ID = az ad app create --display-name "glaa-trips-deploy" --query appId -o tsv
+$APP_ID = az ad app create --display-name "aalg-trips-deploy" --query appId -o tsv
 az ad sp create --id $APP_ID
 
 az role assignment create --assignee $APP_ID --role "Contributor" `

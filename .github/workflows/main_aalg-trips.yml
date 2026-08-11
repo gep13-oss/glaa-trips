@@ -1,4 +1,4 @@
-# Build, test and deploy glaa-trips to Azure App Service.
+# Build, test and deploy aalg-trips to Azure App Service.
 #
 # Auth is secretless (OIDC): the deploy job requests a short-lived token via a
 # federated credential on an Azure identity, so no publish profile or client
@@ -11,7 +11,7 @@
 #   secrets.AZURE_CLIENT_ID / AZURE_TENANT_ID / AZURE_SUBSCRIPTION_ID - the
 #     federated identity used by azure/login.
 
-name: Build and deploy glaa-trips
+name: Build and deploy aalg-trips
 
 on:
   push:
