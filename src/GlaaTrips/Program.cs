@@ -95,6 +95,47 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
+// Security response headers (OWASP Secure Headers Project) applied to EVERY
+// response — static files, the authenticated media endpoint, Razor pages and
+// error responses alike — by sitting at the front of the pipeline. web.config's
+// header block is an IIS concept and is ignored on Linux App Service, so the
+// headers are set here instead. A safe baseline CSP is enforced now; the
+// stricter resource policy ships in Report-Only so any violation surfaces in the
+// browser console before it is switched to enforcing.
+const string cspEnforced =
+    "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'";
+const string cspReportOnly =
+    "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
+    "form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' data: https://tile.openstreetmap.org; font-src 'self'; " +
+    "connect-src 'self'; upgrade-insecure-requests";
+
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers["Content-Security-Policy"] = cspEnforced;
+    headers["Content-Security-Policy-Report-Only"] = cspReportOnly;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "DENY";
+    headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+
+    // OWASP now recommends explicitly disabling the legacy, deprecated XSS filter.
+    headers["X-XSS-Protection"] = "0";
+    headers["Cross-Origin-Opener-Policy"] = "same-origin";
+    headers["Cross-Origin-Resource-Policy"] = "same-origin";
+    headers["Permissions-Policy"] =
+        "geolocation=(), camera=(), microphone=(), payment=(), usb=(), display-capture=(), fullscreen=(self)";
+
+    // Only meaningful over a secure connection; Cloudflare also enforces HSTS at
+    // the edge, so this is the origin-side belt to that braces.
+    if (context.Request.IsHttps)
+    {
+        headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+    }
+
+    await next();
+});
+
 // ---- HTTP pipeline (was Startup.Configure) ----
 if (app.Environment.IsDevelopment())
 {
