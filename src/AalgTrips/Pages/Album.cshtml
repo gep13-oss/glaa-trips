@@ -8,58 +8,81 @@
     var inv = System.Globalization.CultureInfo.InvariantCulture;
 }
 
-<div id="admin" class="admin-panel" if-authorized>
-    <form class="upload-row" method="post" enctype="multipart/form-data">
-        <div class="field field--file">
-            <label for="files">Add photos</label>
-            <input type="file" id="files" aria-label="Upload photo" name="files" required multiple accept="image/*" />
+<div id="admin" class="album-admin" if-authorized>
+    <details class="actions-menu">
+        <summary class="btn btn--ghost actions-menu__trigger">Actions</summary>
+        <div class="actions-menu__list">
+            <button type="button" class="actions-menu__item" data-open-dialog="#editDialog">Edit trip</button>
+            <button type="button" class="actions-menu__item" data-open-dialog="#renameDialog">Rename trip</button>
+            <button type="button" class="actions-menu__item" data-open-dialog="#uploadDialog">Upload photos</button>
+            <form method="post" class="actions-menu__form">
+                <input type="submit" class="actions-menu__item actions-menu__item--danger" asp-page-handler="delete" id="deletealbum" aria-label="Delete album" title="Delete album" value="Delete trip" />
+            </form>
         </div>
-        <input type="submit" class="btn btn--primary" asp-page-handler="upload" data-progress="Uploading…" id="btnfiles" value="Upload photos" />
-    </form>
+    </details>
 
-    <form class="trip-form" method="post" enctype="multipart/form-data">
-        <h2 class="trip-form__title">Edit trip</h2>
-        <div class="field field--place">
-            <label for="name">Place</label>
-            <input type="text" name="name" id="name" required value="@Model.Album.DisplayName" />
-        </div>
-        <div class="field field--notes">
-            <label for="description">Notes</label>
-            <input type="text" name="description" id="description" value="@Model.Album.Description" />
-        </div>
-        <div class="field field--date">
-            <label for="visited">Date visited</label>
-            <input type="date" name="visited" id="visited" value="@Model.Album.Visited.ToString("yyyy-MM-dd")" />
-        </div>
-        <div class="field field--lat">
-            <label for="latitude">Latitude</label>
-            <input type="number" step="any" name="latitude" id="latitude" value="@Model.Album.Latitude.ToString(inv)" />
-        </div>
-        <div class="field field--long">
-            <label for="longitude">Longitude</label>
-            <input type="number" step="any" name="longitude" id="longitude" value="@Model.Album.Longitude.ToString(inv)" />
-        </div>
-        <div class="field field--actions">
-            <input type="submit" class="btn btn--primary" asp-page-handler="edit" data-progress="Saving…" id="btnEdit" value="Save changes" />
-        </div>
-    </form>
+    <dialog id="editDialog" class="modal" aria-label="Edit trip">
+        <form class="trip-form modal__form" method="post" enctype="multipart/form-data">
+            <h2 class="trip-form__title">Edit trip</h2>
+            <button type="button" class="modal__close" data-close-dialog aria-label="Close">&times;</button>
+            <div class="field field--place">
+                <label for="name">Place</label>
+                <input type="text" name="name" id="name" required value="@Model.Album.DisplayName" />
+            </div>
+            <div class="field field--notes">
+                <label for="description">Notes</label>
+                <input type="text" name="description" id="description" value="@Model.Album.Description" />
+            </div>
+            <div class="field field--date">
+                <label for="visited">Date visited</label>
+                <input type="date" name="visited" id="visited" value="@Model.Album.Visited.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field field--lat">
+                <label for="latitude">Latitude</label>
+                <input type="number" step="any" name="latitude" id="latitude" value="@Model.Album.Latitude.ToString(inv)" />
+            </div>
+            <div class="field field--long">
+                <label for="longitude">Longitude</label>
+                <input type="number" step="any" name="longitude" id="longitude" value="@Model.Album.Longitude.ToString(inv)" />
+            </div>
+            <div class="field field--actions">
+                <button type="button" class="btn btn--ghost" data-close-dialog>Cancel</button>
+                <input type="submit" class="btn btn--primary" asp-page-handler="edit" data-progress="Saving…" id="btnEdit" value="Save changes" />
+            </div>
+        </form>
+    </dialog>
 
-    <form class="trip-form" method="post">
-        <h2 class="trip-form__title">Rename trip</h2>
-        <p class="trip-form__hint">Updates the trip's title <em>and</em> its web address to match. Use this to
-            correct a name whose misspelling is baked into the link; the photos move with it.</p>
-        <div class="field field--place">
-            <label for="renameName">New title</label>
-            <input type="text" name="name" id="renameName" required value="@Model.Album.DisplayName" />
-        </div>
-        <div class="field field--actions">
-            <input type="submit" class="btn" asp-page-handler="rename" data-progress="Renaming…" id="btnRename" value="Rename &amp; fix link" />
-        </div>
-    </form>
+    <dialog id="renameDialog" class="modal" aria-label="Rename trip">
+        <form class="trip-form modal__form" method="post">
+            <h2 class="trip-form__title">Rename trip</h2>
+            <button type="button" class="modal__close" data-close-dialog aria-label="Close">&times;</button>
+            <p class="trip-form__hint">Updates the trip's title <em>and</em> its web address to match. Use this to
+                correct a name whose misspelling is baked into the link; the photos move with it.</p>
+            <div class="field field--place">
+                <label for="renameName">New title</label>
+                <input type="text" name="name" id="renameName" required value="@Model.Album.DisplayName" />
+            </div>
+            <div class="field field--actions">
+                <button type="button" class="btn btn--ghost" data-close-dialog>Cancel</button>
+                <input type="submit" class="btn" asp-page-handler="rename" data-progress="Renaming…" id="btnRename" value="Rename &amp; fix link" />
+            </div>
+        </form>
+    </dialog>
 
-    <form method="post" class="delete">
-        <input type="submit" class="admin-delete" asp-page-handler="delete" id="deletealbum" aria-label="Delete album" title="Delete album" value="Delete trip" />
-    </form>
+    <dialog id="uploadDialog" class="modal" aria-label="Upload photos">
+        <form class="trip-form modal__form" method="post" enctype="multipart/form-data">
+            <h2 class="trip-form__title">Upload photos</h2>
+            <button type="button" class="modal__close" data-close-dialog aria-label="Close">&times;</button>
+            <div class="field field--file">
+                <label for="files">Add photos</label>
+                <input type="file" id="files" aria-label="Upload photo" name="files" required multiple accept="image/*" />
+            </div>
+            <div class="field field--actions">
+                <button type="button" class="btn btn--ghost" data-close-dialog>Cancel</button>
+                <input type="submit" class="btn btn--primary" asp-page-handler="upload" data-progress="Uploading…" id="btnfiles" value="Upload photos" />
+            </div>
+        </form>
+    </dialog>
 </div>
 
 <header class="album-head">

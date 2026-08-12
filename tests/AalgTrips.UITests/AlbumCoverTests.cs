@@ -59,6 +59,7 @@ namespace AalgTrips.UITests
         private async Task UploadAsync(string name)
         {
             await Page.GotoAsync($"{BaseUrl}/album/{ServerFixture.SampleAlbumSlug}/");
+            await OpenAlbumActionAsync("uploadDialog");
             await Page.SetInputFilesAsync("#files", new FilePayload
             {
                 Name = name,

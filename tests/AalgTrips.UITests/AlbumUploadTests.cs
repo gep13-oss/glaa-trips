@@ -28,6 +28,7 @@ namespace AalgTrips.UITests
             await SignInAsync();
             await Page.GotoAsync($"{BaseUrl}/album/{ServerFixture.SampleAlbumSlug}/");
 
+            await OpenAlbumActionAsync("uploadDialog");
             await Page.SetInputFilesAsync("#files", new FilePayload
             {
                 Name = "uploaded-shot.png",
@@ -67,6 +68,7 @@ namespace AalgTrips.UITests
             await SignInAsync();
             await Page.GotoAsync($"{BaseUrl}/album/{ServerFixture.SampleAlbumSlug}/");
 
+            await OpenAlbumActionAsync("uploadDialog");
             await Page.SetInputFilesAsync("#files", new FilePayload
             {
                 Name = "bad-shot.png",
@@ -97,6 +99,7 @@ namespace AalgTrips.UITests
             // is too large to even read (which was the production failure).
             var oversize = new byte[31 * 1024 * 1024];
 
+            await OpenAlbumActionAsync("uploadDialog");
             await Page.SetInputFilesAsync("#files", new FilePayload
             {
                 Name = "oversize.png",

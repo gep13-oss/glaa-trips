@@ -52,6 +52,42 @@ namespace AalgTrips.UITests
         }
 
         /// <summary>
+        /// Opens the home page "Add trip" modal and waits for its dialog to be open.
+        /// The create form now lives inside a &lt;dialog&gt; behind this button, so a
+        /// test that fills the create fields must open the modal first.
+        /// </summary>
+        /// <returns>A task that completes once the Add-trip dialog is open.</returns>
+        protected async Task OpenAddTripModalAsync()
+        {
+            await Page.ClickAsync("[data-open-dialog='#addTripDialog']");
+            await Page.WaitForSelectorAsync("#addTripDialog[open]");
+        }
+
+        /// <summary>
+        /// Opens the album page's "Actions" dropdown so its items (Edit, Rename,
+        /// Upload, Delete) become visible and actionable.
+        /// </summary>
+        /// <returns>A task that completes once the dropdown is open.</returns>
+        protected async Task OpenActionsMenuAsync()
+        {
+            await Page.ClickAsync("summary.actions-menu__trigger");
+            await Page.WaitForSelectorAsync(".actions-menu[open]");
+        }
+
+        /// <summary>
+        /// Opens a named action modal from the album page's "Actions" dropdown: it
+        /// opens the menu, clicks the matching item and waits for that dialog to open.
+        /// </summary>
+        /// <param name="dialogId">The dialog element id, for example "editDialog".</param>
+        /// <returns>A task that completes once the requested dialog is open.</returns>
+        protected async Task OpenAlbumActionAsync(string dialogId)
+        {
+            await OpenActionsMenuAsync();
+            await Page.ClickAsync($"[data-open-dialog='#{dialogId}']");
+            await Page.WaitForSelectorAsync($"#{dialogId}[open]");
+        }
+
+        /// <summary>
         /// Reads a valid antiforgery token from a page that renders one of the admin
         /// forms. The token is scoped to the current context (anonymous before
         /// <see cref="SignInAsync"/>, authenticated after) and <c>Page.APIRequest</c>

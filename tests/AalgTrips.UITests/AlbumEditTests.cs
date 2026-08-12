@@ -1,7 +1,5 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Microsoft.Playwright;
-using Microsoft.Playwright.NUnit;
 
 namespace AalgTrips.UITests
 {
@@ -25,6 +23,7 @@ namespace AalgTrips.UITests
             await Page.GotoAsync(AlbumUrl);
 
             var newDescription = "Edited by AlbumEditTests " + System.Guid.NewGuid().ToString("N");
+            await OpenAlbumActionAsync("editDialog");
             await Page.FillAsync("#admin #description", newDescription);
             await Page.ClickAsync("#btnEdit");
 
@@ -43,6 +42,7 @@ namespace AalgTrips.UITests
             await SignInAsync();
             await Page.GotoAsync(AlbumUrl);
 
+            await OpenAlbumActionAsync("editDialog");
             await Page.FillAsync("#admin #latitude", "12.34");
             await Page.FillAsync("#admin #longitude", "56.78");
             await Page.ClickAsync("#btnEdit");
@@ -74,6 +74,7 @@ namespace AalgTrips.UITests
             // The seeded album already owns the "sample-trip" slug. A new trip whose
             // title slugs to the same value must be refused, not written over the
             // existing album (which would clobber its metadata and duplicate it).
+            await OpenAddTripModalAsync();
             await Page.FillAsync("#name", ServerFixture.SampleAlbumTitle);
             await Page.FillAsync("#visited", "2019-03-03");
             await Page.FillAsync("#latitude", "10");
@@ -99,6 +100,7 @@ namespace AalgTrips.UITests
             try
             {
                 await Page.GotoAsync(AlbumUrl);
+                await OpenAlbumActionAsync("renameDialog");
                 await Page.FillAsync("#renameName", "Renamed Sample Trip");
                 await Page.ClickAsync("#btnRename");
 
@@ -137,6 +139,7 @@ namespace AalgTrips.UITests
             }
 
             await Page.GotoAsync($"{BaseUrl}/album/renamed-sample-trip/");
+            await OpenAlbumActionAsync("renameDialog");
             await Page.FillAsync("#renameName", ServerFixture.SampleAlbumTitle);
             await Page.ClickAsync("#btnRename");
             await Page.WaitForURLAsync(new Regex($"/album/{ServerFixture.SampleAlbumSlug}/$"));

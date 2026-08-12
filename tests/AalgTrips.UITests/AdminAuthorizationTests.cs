@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using Microsoft.Playwright;
-using Microsoft.Playwright.NUnit;
 
 namespace AalgTrips.UITests
 {
@@ -49,7 +48,9 @@ namespace AalgTrips.UITests
             await SignInAsync();
 
             // Create a throwaway album via the home-page admin form (the form
-            // and its antiforgery token are handled by the real browser).
+            // and its antiforgery token are handled by the real browser). The form
+            // now lives in a modal opened from the "Add trip" button.
+            await OpenAddTripModalAsync();
             await Page.FillAsync("#admin #name", "Auth Test Album");
             await Page.FillAsync("#admin #description", "Created by AdminAuthorizationTests");
             await Page.FillAsync("#admin #visited", "2026-02-02");
@@ -64,9 +65,11 @@ namespace AalgTrips.UITests
             Assert.That(created.Status, Is.EqualTo(200), "the authenticated admin should be able to create an album");
 
             // ...and delete it again, so the test cleans up after itself.
+            // Delete now lives in the album's "Actions" dropdown; open it first.
             // admin.js guards the delete button with a confirm() dialog; accept
             // it so the form actually submits (Playwright dismisses by default).
             Page.Dialog += async (_, dialog) => await dialog.AcceptAsync();
+            await OpenActionsMenuAsync();
             await Page.ClickAsync("#deletealbum");
             await Page.WaitForURLAsync(BaseUrl + "/");
 

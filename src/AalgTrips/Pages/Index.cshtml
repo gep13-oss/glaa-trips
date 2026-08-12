@@ -8,33 +8,41 @@
     bool signedIn = User.Identity != null && User.Identity.IsAuthenticated;
 }
 
-<form id="admin" class="trip-form" if-authorized method="post" action="~/album/new/create/">
-    <h2 class="trip-form__title">New trip</h2>
+<div id="admin" class="page-actions" if-authorized>
+    <button type="button" class="btn btn--primary" data-open-dialog="#addTripDialog">Add trip</button>
 
-    <div class="field field--place">
-        <label for="name">Place</label>
-        <input type="text" name="name" id="name" required placeholder="e.g. New Slains Castle" />
-    </div>
-    <div class="field field--notes">
-        <label for="description">Notes</label>
-        <input type="text" name="description" id="description" placeholder="A line about the trip" />
-    </div>
-    <div class="field field--date">
-        <label for="visited">Date visited</label>
-        <input type="date" name="visited" id="visited" />
-    </div>
-    <div class="field field--lat">
-        <label for="latitude">Latitude</label>
-        <input type="number" step="any" name="latitude" id="latitude" placeholder="57.4183" />
-    </div>
-    <div class="field field--long">
-        <label for="longitude">Longitude</label>
-        <input type="number" step="any" name="longitude" id="longitude" placeholder="-1.8618" />
-    </div>
-    <div class="field field--actions">
-        <input type="submit" id="newalbum" class="btn btn--primary" value="Add trip" data-progress="Creating…" />
-    </div>
-</form>
+    <dialog id="addTripDialog" class="modal" aria-label="New trip">
+        <form class="trip-form modal__form" method="post" action="~/album/new/create/">
+            <h2 class="trip-form__title">New trip</h2>
+            <button type="button" class="modal__close" data-close-dialog aria-label="Close">&times;</button>
+
+            <div class="field field--place">
+                <label for="name">Place</label>
+                <input type="text" name="name" id="name" required placeholder="e.g. New Slains Castle" />
+            </div>
+            <div class="field field--notes">
+                <label for="description">Notes</label>
+                <input type="text" name="description" id="description" placeholder="A line about the trip" />
+            </div>
+            <div class="field field--date">
+                <label for="visited">Date visited</label>
+                <input type="date" name="visited" id="visited" />
+            </div>
+            <div class="field field--lat">
+                <label for="latitude">Latitude</label>
+                <input type="number" step="any" name="latitude" id="latitude" placeholder="57.4183" />
+            </div>
+            <div class="field field--long">
+                <label for="longitude">Longitude</label>
+                <input type="number" step="any" name="longitude" id="longitude" placeholder="-1.8618" />
+            </div>
+            <div class="field field--actions">
+                <button type="button" class="btn btn--ghost" data-close-dialog>Cancel</button>
+                <input type="submit" id="newalbum" class="btn btn--primary" value="Add trip" data-progress="Creating…" />
+            </div>
+        </form>
+    </dialog>
+</div>
 
 <section class="map-hero">
     <div id="map" data-markers-url="@ac.MarkersUrl()"></div>
@@ -45,7 +53,7 @@
     <p class="empty">
         @if (signedIn)
         {
-            <text>No trips yet — add your first with the form above.</text>
+            <text>No trips yet — add your first with the “Add trip” button above.</text>
         }
         else
         {
