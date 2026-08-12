@@ -100,9 +100,13 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      # clean: true wipes wwwroot before deploying so a rename or removal can't
+      # leave a stale file behind (the Phase 2 outage came from an old
+      # GlaaTrips.dll lingering next to AalgTrips.dll after an overlay deploy).
       - name: Deploy to Azure App Service
         id: deploy
         uses: azure/webapps-deploy@02a81bead70021f5284939794bcec79c271ab383 # v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           package: ./publish
+          clean: true
