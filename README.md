@@ -83,11 +83,11 @@ subscription (`az account set --subscription <id>`).
 ```powershell
 # Adjust the names/region. Storage account names must be globally unique and
 # 3–24 lowercase alphanumeric characters.
-$RG = "glaa-trips-rg"
+$RG = "aalg-trips-rg"
 $LOCATION = "ukwest"
-$PLAN = "glaa-trips-plan"
-$APP = "glaa-trips"                 # must match AZURE_WEBAPP_NAME in the workflow
-$STORAGE = "glaatripsstore123"
+$PLAN = "aalg-trips-plan"
+$APP = "aalg-trips"                 # must match AZURE_WEBAPP_NAME in the workflow
+$STORAGE = "aalgtripsstore123"
 $CONTAINER = "albums"
 
 az group create -n $RG -l $LOCATION

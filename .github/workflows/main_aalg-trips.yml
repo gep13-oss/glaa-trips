@@ -26,7 +26,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: glaa-trips
+  AZURE_WEBAPP_NAME: aalg-trips
   DOTNET_VERSION: "10.0.x"
 
 jobs:
