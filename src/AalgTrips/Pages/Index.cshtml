@@ -6,6 +6,15 @@
     ViewData["Image"] = Request.Scheme + "://" + Request.Host + ac.Albums.FirstOrDefault()?.CoverPhoto?.GetThumbnailLink((int)ImageType.Full, out int h);
 
     bool signedIn = User.Identity != null && User.Identity.IsAuthenticated;
+
+    // Filter options: only offer a castle toggle / a person's chip when at least
+    // one trip actually uses it, and list the people in canonical order (known
+    // people first, then any extra names) so the bar stays tidy.
+    bool anyCastle = ac.Albums.Any(a => a.CastleVisited);
+    var usedPeople = ac.Albums.SelectMany(a => a.People).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    var peopleInUse = KnownPeople.All.Where(p => usedPeople.Contains(p, StringComparer.OrdinalIgnoreCase))
+        .Concat(usedPeople.Where(p => !KnownPeople.All.Contains(p, StringComparer.OrdinalIgnoreCase)))
+        .ToList();
 }
 
 <div id="admin" class="page-actions" if-authorized>
@@ -76,11 +85,31 @@ else
             <span class="section-head__count">@ac.Albums.Count trip@(ac.Albums.Count == 1 ? "" : "s")</span>
         </div>
 
+        @if (anyCastle || peopleInUse.Count > 0)
+        {
+            <div class="filters" id="filters" hidden>
+                <span class="filters__label">Filter</span>
+                @if (anyCastle)
+                {
+                    <label class="chip"><input type="checkbox" class="filter-castle" /><span>Castles</span></label>
+                }
+                @foreach (var person in peopleInUse)
+                {
+                    <label class="chip"><input type="checkbox" class="filter-person" value="@person" /><span>@person</span></label>
+                }
+                @if (peopleInUse.Count > 0)
+                {
+                    <label class="filters__exact" title="Show only trips with exactly the selected people"><input type="checkbox" class="filter-exact" /> Exact match</label>
+                }
+                <button type="button" class="filters__clear" hidden>Clear</button>
+            </div>
+        }
+
         <div class="trip-grid">
             @foreach (Album album in ac.Albums)
             {
                 var cover = album.CoverPhoto;
-                <a class="trip-card" href="/album/@album.UrlName/">
+                <a class="trip-card" href="/album/@album.UrlName/" data-castle="@(album.CastleVisited ? "true" : "false")" data-people="@string.Join("|", album.People)">
                     <div class="trip-card__media">
                         @if (cover != null)
                         {
@@ -104,6 +133,8 @@ else
                 </a>
             }
         </div>
+
+        <p class="trips-empty" id="tripsEmpty" hidden>No trips match your selections.</p>
     </section>
 }
 
@@ -117,5 +148,6 @@ else
     <script src="/lib/leaflet/leaflet.js"></script>
     <script src="/lib/leaflet.markercluster/leaflet.markercluster.js"></script>
     <script src="~/js/map.js" asp-append-version="true"></script>
+    <script src="~/js/filters.js" asp-append-version="true"></script>
     <script if-authorized src="~/js/admin.js" async asp-append-version="true"></script>
 }

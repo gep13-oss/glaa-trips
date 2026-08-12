@@ -37,6 +37,23 @@
         attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
     }).addTo(map);
 
+    // Trips near (or on top of) each other collapse into a single count badge.
+    // The hover ring over a cluster's covered area is noisy for a photo map; the
+    // count badge alone communicates "several trips here".
+    const cluster = L.markerClusterGroup({ showCoverageOnHover: false });
+    map.addLayer(cluster);
+
+    let allMarkers = [];
+    let activeFilter = null;
+
+    // The home-page filters (filters.js) broadcast the active filter; re-plot the
+    // pins so the map always matches the filtered trip list. A null detail clears
+    // the filter and shows every pin again.
+    document.addEventListener("trips:filter", (event) => {
+        activeFilter = event.detail;
+        render();
+    });
+
     // The marker file's URL is provided by the server (the photo store): a
     // root-relative /albums/markers.json for local disk, or a CDN/blob URL when
     // content is stored in Azure Blob. Fall back to the local path if absent.
@@ -44,25 +61,20 @@
 
     fetch(markersUrl)
         .then((response) => response.json())
-        .then(plotMarkers)
+        .then((markers) => {
+            allMarkers = Array.isArray(markers) ? markers : [];
+            render();
+        })
         .catch(() => map.setView([20, 0], 2));
 
-    function plotMarkers(markers) {
-        if (!Array.isArray(markers) || markers.length === 0) {
-            // No albums with coordinates yet: show the whole world rather than
-            // leaving Leaflet without a view (which would throw on interaction).
-            map.setView([20, 0], 2);
-            return;
-        }
+    function render() {
+        const shown = allMarkers.filter((marker) => matchesFilter(marker, activeFilter));
 
-        const cluster = L.markerClusterGroup({
-            // The hover ring over a cluster's covered area is noisy for a photo
-            // map; the count badge alone communicates "several trips here".
-            showCoverageOnHover: false,
-        });
+        cluster.clearLayers();
+
         const points = [];
 
-        markers.forEach((marker) => {
+        shown.forEach((marker) => {
             const position = [marker.Lat, marker.Long];
 
             // Castle trips get a distinct-colour pin (a locally-styled divIcon, so
@@ -79,8 +91,39 @@
             points.push(position);
         });
 
-        map.addLayer(cluster);
-        map.fitBounds(points, { padding: [20, 20], maxZoom: 12 });
+        if (points.length > 0) {
+            map.fitBounds(points, { padding: [20, 20], maxZoom: 12 });
+        } else {
+            // No matching trips: show the whole world rather than leaving Leaflet
+            // without a view (which would throw on interaction).
+            map.setView([20, 0], 2);
+        }
+    }
+
+    function matchesFilter(marker, filter) {
+        if (!filter) {
+            return true;
+        }
+
+        if (filter.castleOnly && !marker.Castle) {
+            return false;
+        }
+
+        if (filter.people && filter.people.length > 0) {
+            const on = marker.People || [];
+
+            // Match the card filter: every selected person must be on the trip (AND),
+            // and "exact" additionally requires no other people (exact set).
+            if (!filter.people.every((person) => on.includes(person))) {
+                return false;
+            }
+
+            if (filter.exact && on.length !== filter.people.length) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     // Builds the hover tooltip as a DOM node (not an HTML string) so an album

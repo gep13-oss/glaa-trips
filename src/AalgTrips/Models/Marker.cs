@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace AalgTrips.Models
 {
     /// <summary>
@@ -35,5 +37,11 @@ namespace AalgTrips.Models
         /// client (<c>map.js</c>) reads this to draw a distinct-coloured pin.
         /// </summary>
         public bool Castle { get; set; }
+
+        /// <summary>
+        /// Gets or sets the people on the trip, so the map can filter its pins by
+        /// person in step with the home-page filters.
+        /// </summary>
+        public IReadOnlyList<string> People { get; set; }
     }
 }

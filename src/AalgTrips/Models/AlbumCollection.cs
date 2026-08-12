@@ -150,6 +150,7 @@ namespace AalgTrips.Models
                         Date = a.Visited.ToString("MMM yyyy", CultureInfo.InvariantCulture),
                         Photos = a.Photos.Count,
                         Castle = a.CastleVisited,
+                        People = a.People,
                     })
                     .ToList();
             }

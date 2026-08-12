@@ -91,7 +91,9 @@ img {
     color: #fff;
     position: sticky;
     top: 0;
-    z-index: 500;
+    /* Above Leaflet's map controls (z-index 1000) so the zoom +/- buttons scroll
+       under the sticky header rather than over it. */
+    z-index: 1100;
 }
 
 .site-header .container {
@@ -576,12 +578,98 @@ dialog.modal::backdrop {
     align-self: center;
 }
 
+/* ---- Trip filters (home) ------------------------------------------------ */
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin: 0 0 1.3rem;
+}
+
+.filters__label {
+    margin-right: .2rem;
+    font: 600 .68rem/1 var(--font-mono);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+/* A chip is a toggle: the native checkbox is visually hidden and the label pill
+   reflects the checked state (via :has). */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    font: 600 .82rem/1 var(--font-body);
+    padding: .48em .85em;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    user-select: none;
+}
+
+.chip input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.chip:hover {
+    border-color: var(--muted);
+}
+
+.chip:has(input:checked) {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.chip:has(input:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* "Exact match" modifies the people filter, so it reads as a plain checkbox
+   rather than a selectable pill. */
+.filters__exact {
+    display: inline-flex;
+    align-items: center;
+    gap: .5ch;
+    margin-left: .3rem;
+    font: 600 .8rem/1 var(--font-body);
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+}
+
+.filters__exact input {
+    accent-color: var(--accent);
+}
+
+.filters__clear {
+    font: 600 .78rem/1 var(--font-body);
+    color: var(--accent);
+    background: none;
+    border: 0;
+    padding: .48em .5em;
+    cursor: pointer;
+}
+
 /* ---- Trip cards (home) -------------------------------------------------- */
 
 .trip-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 1.4rem;
+}
+
+.trip-card[hidden] {
+    display: none;
 }
 
 .trip-card {
@@ -660,7 +748,8 @@ dialog.modal::backdrop {
 
 /* ---- Empty state -------------------------------------------------------- */
 
-.empty {
+.empty,
+.trips-empty {
     margin: 0 0 2.75rem;
     padding: 2.4rem 1.5rem;
     text-align: center;
