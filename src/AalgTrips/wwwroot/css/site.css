@@ -692,9 +692,33 @@ dialog.modal::backdrop {
 }
 
 .trip-card__media {
+    position: relative;
     aspect-ratio: 3 / 2;
     background: var(--accent-tint);
     overflow: hidden;
+}
+
+/* Castle badge: a round amber chip in the cover's corner, matching the amber
+   castle pin on the map, so a castle trip is recognisable while scrolling. */
+.trip-card__castle {
+    position: absolute;
+    top: .6rem;
+    right: .6rem;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: #c07a1e;
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(21, 39, 44, .35);
+}
+
+.trip-card__castle svg {
+    width: 1.15rem;
+    height: 1.15rem;
 }
 
 .trip-card__media img {
@@ -744,6 +768,21 @@ dialog.modal::backdrop {
 
 .trip-card__dossier .sep {
     opacity: .5;
+}
+
+.trip-card__people {
+    margin: .5rem 0 0;
+    font-size: .86rem;
+    line-height: 1.4;
+    color: var(--muted);
+}
+
+.trip-card__people-label {
+    margin-right: .4ch;
+    font: 600 .62rem/1 var(--font-mono);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
 }
 
 /* ---- Empty state -------------------------------------------------------- */

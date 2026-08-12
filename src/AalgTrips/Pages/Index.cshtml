@@ -111,6 +111,14 @@ else
                 var cover = album.CoverPhoto;
                 <a class="trip-card" href="/album/@album.UrlName/" data-castle="@(album.CastleVisited ? "true" : "false")" data-people="@string.Join("|", album.People)">
                     <div class="trip-card__media">
+                        @if (album.CastleVisited)
+                        {
+                            <span class="trip-card__castle" title="Castle visited" aria-label="Castle visited">
+                                <svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">
+                                    <path d="M3 21V9h2V7h2v2h2V7h2v2h2V7h2v2h2V7h2v2h2v12H3Zm7 0v-6a2 2 0 0 1 4 0v6h-4Z" />
+                                </svg>
+                            </span>
+                        }
                         @if (cover != null)
                         {
                             <img photo="@cover" type="Cover" />
@@ -129,6 +137,10 @@ else
                             <span class="sep">·</span>
                             <span class="count">@album.Photos.Count photo@(album.Photos.Count == 1 ? "" : "s")</span>
                         </p>
+                        @if (album.People.Count > 0)
+                        {
+                            <p class="trip-card__people"><span class="trip-card__people-label">Who</span> @string.Join(", ", album.People)</p>
+                        }
                     </div>
                 </a>
             }
