@@ -29,13 +29,13 @@
                 <label for="name">Place</label>
                 <input type="text" name="name" id="name" required value="@Model.Album.DisplayName" />
             </div>
-            <div class="field field--notes">
-                <label for="description">Notes</label>
-                <input type="text" name="description" id="description" value="@Model.Album.Description" />
-            </div>
             <div class="field field--date">
                 <label for="visited">Date visited</label>
                 <input type="date" name="visited" id="visited" value="@Model.Album.Visited.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="field field--notes">
+                <label for="description">Notes</label>
+                <textarea name="description" id="description" rows="4">@Model.Album.Description</textarea>
             </div>
             <div class="field field--lat">
                 <label for="latitude">Latitude</label>
@@ -44,6 +44,12 @@
             <div class="field field--long">
                 <label for="longitude">Longitude</label>
                 <input type="number" step="any" name="longitude" id="longitude" value="@Model.Album.Longitude.ToString(inv)" />
+            </div>
+            <div class="field field--castle field--check">
+                <label class="check-label" for="castleVisited">
+                    <input type="checkbox" name="castleVisited" id="castleVisited" value="true" checked="@Model.Album.CastleVisited" />
+                    Castle visited
+                </label>
             </div>
             <div class="field field--actions">
                 <button type="button" class="btn btn--ghost" data-close-dialog>Cancel</button>

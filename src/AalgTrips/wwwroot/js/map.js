@@ -20,6 +20,16 @@
     // markers render without reaching out to a CDN.
     L.Icon.Default.imagePath = "/lib/leaflet/images/";
 
+    // A castle trip's pin: a small round CSS marker (styled in site.css). Using a
+    // divIcon keeps it a local asset with no extra image download.
+    const castleIcon = L.divIcon({
+        className: "castle-pin",
+        html: "<span class=\"castle-pin__dot\"></span>",
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+        tooltipAnchor: [0, -10],
+    });
+
     const map = L.map(mapElement);
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -55,7 +65,11 @@
         markers.forEach((marker) => {
             const position = [marker.Lat, marker.Long];
 
-            L.marker(position)
+            // Castle trips get a distinct-colour pin (a locally-styled divIcon, so
+            // no CDN asset); every other trip keeps Leaflet's default marker.
+            const options = marker.Castle ? { icon: castleIcon } : undefined;
+
+            L.marker(position, options)
                 .bindTooltip(tooltipFor(marker), { direction: "top", offset: [0, -12] })
                 .on("click", () => {
                     window.location.href = "album/" + marker.Slug;

@@ -57,7 +57,7 @@ namespace AalgTrips.Pages
             return new RedirectResult("~/");
         }
 
-        public async Task<IActionResult> OnPostCreate(string name, string description, string visited, double latitude, double longitude)
+        public async Task<IActionResult> OnPostCreate(string name, string description, string visited, double latitude, double longitude, bool castleVisited)
         {
             if (RequireAdmin() is { } challenge)
             {
@@ -96,6 +96,7 @@ namespace AalgTrips.Pages
                 Visited = DateTime.Parse(visited),
                 Latitude = latitude,
                 Longitude = longitude,
+                CastleVisited = castleVisited,
             };
 
             await _store.WriteMetadataAsync(slugName, albumMetaData);
@@ -106,7 +107,7 @@ namespace AalgTrips.Pages
             return new RedirectResult($"~/album/{slugName}/");
         }
 
-        public async Task<IActionResult> OnPostEdit([FromRoute(Name = "name")] string slug, string name, string description, string visited, double latitude, double longitude)
+        public async Task<IActionResult> OnPostEdit([FromRoute(Name = "name")] string slug, string name, string description, string visited, double latitude, double longitude, bool castleVisited)
         {
             if (RequireAdmin() is { } challenge)
             {
@@ -136,6 +137,7 @@ namespace AalgTrips.Pages
                 Visited = DateTime.Parse(visited),
                 Latitude = latitude,
                 Longitude = longitude,
+                CastleVisited = castleVisited,
 
                 // Editing the trip details must not drop the chosen cover photo.
                 CoverPhoto = existingAlbum.CoverPhotoName,
@@ -199,6 +201,7 @@ namespace AalgTrips.Pages
                 Visited = existingAlbum.Visited,
                 Latitude = existingAlbum.Latitude,
                 Longitude = existingAlbum.Longitude,
+                CastleVisited = existingAlbum.CastleVisited,
                 CoverPhoto = existingAlbum.CoverPhotoName,
             };
 
@@ -319,6 +322,7 @@ namespace AalgTrips.Pages
                 Visited = album.Visited,
                 Latitude = album.Latitude,
                 Longitude = album.Longitude,
+                CastleVisited = album.CastleVisited,
                 CoverPhoto = photo,
             };
 

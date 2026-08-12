@@ -29,5 +29,11 @@ namespace AalgTrips.Models
 
         /// <summary>Gets or sets the number of photos in the album, shown in the tooltip.</summary>
         public int Photos { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the trip visited a castle. The
+        /// client (<c>map.js</c>) reads this to draw a distinct-coloured pin.
+        /// </summary>
+        public bool Castle { get; set; }
     }
 }

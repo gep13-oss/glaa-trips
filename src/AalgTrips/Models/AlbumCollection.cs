@@ -149,6 +149,7 @@ namespace AalgTrips.Models
                         Name = a.DisplayName,
                         Date = a.Visited.ToString("MMM yyyy", CultureInfo.InvariantCulture),
                         Photos = a.Photos.Count,
+                        Castle = a.CastleVisited,
                     })
                     .ToList();
             }

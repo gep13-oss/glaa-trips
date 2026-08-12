@@ -28,6 +28,7 @@ namespace AalgTrips.Models
                 Visited = metaData.Visited;
                 Latitude = metaData.Latitude;
                 Longitude = metaData.Longitude;
+                CastleVisited = metaData.CastleVisited;
                 CoverPhotoName = metaData.CoverPhoto;
             }
         }
@@ -43,6 +44,12 @@ namespace AalgTrips.Models
         public double Latitude { get; }
 
         public double Longitude { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this trip visited a castle. Set from the
+        /// album's metadata and carried onto its map marker as a distinct pin colour.
+        /// </summary>
+        public bool CastleVisited { get; }
 
         /// <summary>
         /// Gets the album's location formatted as a map reference for display, e.g.

@@ -227,7 +227,8 @@ img {
     color: var(--muted);
 }
 
-.field input {
+.field input,
+.field textarea {
     font: 1rem/1.4 var(--font-body);
     color: var(--ink);
     background: var(--surface);
@@ -237,14 +238,47 @@ img {
     width: 100%;
 }
 
-.field input::placeholder {
+.field textarea {
+    line-height: 1.45;
+    min-height: 5.5rem;
+    resize: vertical;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
     color: #9aa4a1;
 }
 
-.field input:focus-visible {
+.field input:focus-visible,
+.field textarea:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 1px;
     border-color: var(--accent);
+}
+
+/* Checkbox field (e.g. "Castle visited") — a horizontal label, not the stacked
+   uppercase field label used by text inputs. */
+.field--check {
+    flex-direction: row;
+    align-items: center;
+}
+
+.check-label {
+    display: flex;
+    align-items: center;
+    gap: .6ch;
+    font: 1rem/1.4 var(--font-body);
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.check-label input[type="checkbox"] {
+    width: 1.1rem;
+    height: 1.1rem;
+    padding: 0;
+    accent-color: var(--accent);
 }
 
 /* ---- Admin: action bar, dropdown menu & modal dialogs ------------------- */
@@ -400,18 +434,16 @@ dialog.modal::backdrop {
     opacity: 0.75;
 }
 
-.trip-form .field--place {
-    grid-column: span 3;
-}
-
-.trip-form .field--notes {
-    grid-column: span 3;
-}
-
+.trip-form .field--place,
 .trip-form .field--date,
 .trip-form .field--lat,
 .trip-form .field--long {
-    grid-column: span 2;
+    grid-column: span 3;
+}
+
+.trip-form .field--notes,
+.trip-form .field--castle {
+    grid-column: 1 / -1;
 }
 
 .trip-form .field--file {
@@ -457,6 +489,23 @@ dialog.modal::backdrop {
 
 .leaflet-container {
     font: inherit;
+}
+
+/* A castle trip's map pin (Leaflet divIcon from map.js): a warm-amber dot that
+   stands out from the default blue teardrop marker. Local CSS only, no asset. */
+.castle-pin {
+    background: none;
+    border: 0;
+}
+
+.castle-pin__dot {
+    display: block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #c07a1e;
+    border: 3px solid #fff;
+    box-shadow: 0 1px 4px rgba(21, 39, 44, .45);
 }
 
 /* Hover tooltip on a map pin: trip name over a muted date · photo-count line. */
@@ -954,7 +1003,8 @@ dialog.modal::backdrop {
     .trip-form .field--notes,
     .trip-form .field--date,
     .trip-form .field--lat,
-    .trip-form .field--long {
+    .trip-form .field--long,
+    .trip-form .field--castle {
         grid-column: span 2;
     }
 

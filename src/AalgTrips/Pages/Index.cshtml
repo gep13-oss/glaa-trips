@@ -20,13 +20,13 @@
                 <label for="name">Place</label>
                 <input type="text" name="name" id="name" required placeholder="e.g. New Slains Castle" />
             </div>
-            <div class="field field--notes">
-                <label for="description">Notes</label>
-                <input type="text" name="description" id="description" placeholder="A line about the trip" />
-            </div>
             <div class="field field--date">
                 <label for="visited">Date visited</label>
                 <input type="date" name="visited" id="visited" />
+            </div>
+            <div class="field field--notes">
+                <label for="description">Notes</label>
+                <textarea name="description" id="description" rows="4" placeholder="A few lines about the trip…"></textarea>
             </div>
             <div class="field field--lat">
                 <label for="latitude">Latitude</label>
@@ -35,6 +35,12 @@
             <div class="field field--long">
                 <label for="longitude">Longitude</label>
                 <input type="number" step="any" name="longitude" id="longitude" placeholder="-1.8618" />
+            </div>
+            <div class="field field--castle field--check">
+                <label class="check-label" for="castleVisited">
+                    <input type="checkbox" name="castleVisited" id="castleVisited" value="true" />
+                    Castle visited
+                </label>
             </div>
             <div class="field field--actions">
                 <button type="button" class="btn btn--ghost" data-close-dialog>Cancel</button>

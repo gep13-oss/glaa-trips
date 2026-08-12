@@ -15,6 +15,13 @@ namespace AalgTrips.Models
         public double Longitude { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether this trip visited a castle. Drives
+        /// a distinct-coloured pin on the home-page map. Absent from older metadata
+        /// files, where it deserializes to <c>false</c>.
+        /// </summary>
+        public bool CastleVisited { get; set; }
+
+        /// <summary>
         /// Gets or sets the file name of the photo chosen to represent the album
         /// (its cover on the home page). When empty, the album falls back to its
         /// first photo.
