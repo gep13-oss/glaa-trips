@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace AalgTrips.Models
 {
@@ -20,6 +21,14 @@ namespace AalgTrips.Models
         /// files, where it deserializes to <c>false</c>.
         /// </summary>
         public bool CastleVisited { get; set; }
+
+        /// <summary>
+        /// Gets or sets the people who were on the trip. Free-text names (not tied to
+        /// site accounts), chosen from a canonical checkbox set but able to hold any
+        /// name. Absent from older metadata files, where it deserializes to
+        /// <c>null</c> and is treated as an empty list.
+        /// </summary>
+        public List<string> People { get; set; }
 
         /// <summary>
         /// Gets or sets the file name of the photo chosen to represent the album

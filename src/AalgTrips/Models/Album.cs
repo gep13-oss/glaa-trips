@@ -20,6 +20,7 @@ namespace AalgTrips.Models
             _ac = ac;
             Id = id;
             Photos = new List<Photo>();
+            People = metaData?.People ?? new List<string>();
 
             if (metaData != null)
             {
@@ -50,6 +51,12 @@ namespace AalgTrips.Models
         /// album's metadata and carried onto its map marker as a distinct pin colour.
         /// </summary>
         public bool CastleVisited { get; }
+
+        /// <summary>
+        /// Gets the people who were on the trip (free-text names). Never null; an
+        /// album with no recorded people exposes an empty list.
+        /// </summary>
+        public IReadOnlyList<string> People { get; }
 
         /// <summary>
         /// Gets the album's location formatted as a map reference for display, e.g.

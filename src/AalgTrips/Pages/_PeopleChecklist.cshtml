@@ -1,0 +1,23 @@
+@using System.Linq
+@model IReadOnlyCollection<string>
+@{
+    // The album's currently-selected people (empty when adding a new trip).
+    var selected = Model ?? System.Array.Empty<string>();
+    var selectedSet = new System.Collections.Generic.HashSet<string>(selected, System.StringComparer.OrdinalIgnoreCase);
+
+    // Offer the canonical people plus any name already on the album that is not in
+    // that list, so a hand-edited or legacy name is still shown and stays ticked.
+    var options = KnownPeople.All.Concat(selected).Distinct(System.StringComparer.OrdinalIgnoreCase);
+}
+<div class="field field--people">
+    <span class="field__legend">Who was on the trip</span>
+    <div class="check-grid">
+        @foreach (var person in options)
+        {
+            <label class="check-label">
+                <input type="checkbox" name="people" value="@person" checked="@selectedSet.Contains(person)" />
+                @person
+            </label>
+        }
+    </div>
+</div>

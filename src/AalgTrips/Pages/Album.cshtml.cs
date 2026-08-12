@@ -57,7 +57,7 @@ namespace AalgTrips.Pages
             return new RedirectResult("~/");
         }
 
-        public async Task<IActionResult> OnPostCreate(string name, string description, string visited, double latitude, double longitude, bool castleVisited)
+        public async Task<IActionResult> OnPostCreate(string name, string description, string visited, double latitude, double longitude, bool castleVisited, List<string> people)
         {
             if (RequireAdmin() is { } challenge)
             {
@@ -97,6 +97,7 @@ namespace AalgTrips.Pages
                 Latitude = latitude,
                 Longitude = longitude,
                 CastleVisited = castleVisited,
+                People = NormalizePeople(people),
             };
 
             await _store.WriteMetadataAsync(slugName, albumMetaData);
@@ -107,7 +108,7 @@ namespace AalgTrips.Pages
             return new RedirectResult($"~/album/{slugName}/");
         }
 
-        public async Task<IActionResult> OnPostEdit([FromRoute(Name = "name")] string slug, string name, string description, string visited, double latitude, double longitude, bool castleVisited)
+        public async Task<IActionResult> OnPostEdit([FromRoute(Name = "name")] string slug, string name, string description, string visited, double latitude, double longitude, bool castleVisited, List<string> people)
         {
             if (RequireAdmin() is { } challenge)
             {
@@ -138,6 +139,7 @@ namespace AalgTrips.Pages
                 Latitude = latitude,
                 Longitude = longitude,
                 CastleVisited = castleVisited,
+                People = NormalizePeople(people),
 
                 // Editing the trip details must not drop the chosen cover photo.
                 CoverPhoto = existingAlbum.CoverPhotoName,
@@ -202,6 +204,7 @@ namespace AalgTrips.Pages
                 Latitude = existingAlbum.Latitude,
                 Longitude = existingAlbum.Longitude,
                 CastleVisited = existingAlbum.CastleVisited,
+                People = existingAlbum.People.ToList(),
                 CoverPhoto = existingAlbum.CoverPhotoName,
             };
 
@@ -323,6 +326,7 @@ namespace AalgTrips.Pages
                 Latitude = album.Latitude,
                 Longitude = album.Longitude,
                 CastleVisited = album.CastleVisited,
+                People = album.People.ToList(),
                 CoverPhoto = photo,
             };
 
@@ -330,6 +334,20 @@ namespace AalgTrips.Pages
             _ac.ReloadAlbum(slug);
 
             return new RedirectResult($"~/album/{slug}/");
+        }
+
+        /// <summary>
+        /// Cleans the posted people list: drops null/blank entries and trims the rest,
+        /// returning an empty (never null) list so the stored metadata is consistent.
+        /// </summary>
+        /// <param name="people">The people values posted from the form's checkboxes.</param>
+        /// <returns>The trimmed, non-empty names, in the order posted.</returns>
+        private static List<string> NormalizePeople(List<string> people)
+        {
+            return people?
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .Select(p => p.Trim())
+                .ToList() ?? new List<string>();
         }
     }
 }
