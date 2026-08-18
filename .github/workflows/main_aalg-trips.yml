@@ -49,10 +49,33 @@ jobs:
       - name: Install Playwright (Chromium + OS deps)
         run: pwsh tests/AalgTrips.UITests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
 
+      # Run a local Azurite emulator so the Azure Blob store contract tests run
+      # in CI instead of being skipped. The local disk store already covers the
+      # shared contract, but this also exercises the Azure store path the live
+      # site runs on. Blob only, backgrounded, and we wait for its port before
+      # the tests start. --skipApiVersionCheck: the Azure SDK sends a newer
+      # x-ms-version than Azurite validates against; real Azure accepts it.
+      - name: Start Azurite (Azure Blob emulator)
+        run: |
+          mkdir -p "${{ runner.temp }}/azurite"
+          npm install -g azurite
+          azurite-blob --silent --skipApiVersionCheck --location "${{ runner.temp }}/azurite" &
+          for i in $(seq 1 30); do
+            if (echo > /dev/tcp/127.0.0.1/10000) 2>/dev/null; then
+              echo "Azurite is up."
+              break
+            fi
+            echo "Waiting for Azurite to accept connections... ($i)"
+            sleep 1
+          done
+
       # Runs the format gate, unit tests and the Playwright UI tests, matching
-      # the local gate. (The Azure Blob store tests stay skipped without a
-      # connection string; the local disk store covers the same contract.)
+      # the local gate. AALG_TRIPS_BLOB_CONNECTION points the Azure Blob store
+      # contract tests at the Azurite emulator started above; without it they
+      # skip (as they do for a local `dotnet cake.cs` run with no emulator).
       - name: Format check, build and test
+        env:
+          AALG_TRIPS_BLOB_CONNECTION: UseDevelopmentStorage=true
         run: dotnet cake.cs --target=Test
 
       - name: Publish
