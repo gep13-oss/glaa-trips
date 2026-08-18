@@ -25,6 +25,18 @@ namespace AalgTrips.Models
         /// <summary>The file name the map's marker list is stored as.</summary>
         public const string MarkersFileName = "markers.json";
 
+        /// <summary>
+        /// The sub-folder (key prefix) all cruise content lives under, so cruises
+        /// are stored beside albums yet kept out of the album catalogue.
+        /// </summary>
+        public const string CruisesFolder = "cruises";
+
+        /// <summary>The file name a cruise's metadata is stored as.</summary>
+        public const string CruiseMetadataFileName = "cruise.json";
+
+        /// <summary>The file name the map's cruise-route list is stored as (at the top level).</summary>
+        public const string CruisesFileName = "cruises.json";
+
         private static readonly string[] _imageExtensions = { ".jpg", ".jpeg", ".gif", ".png" };
         private static readonly Regex _thumbnailSuffix = new Regex(@"-[0-9]+x[0-9]+$", RegexOptions.Compiled);
 
@@ -76,6 +88,15 @@ namespace AalgTrips.Models
         public static string MarkersUrl()
         {
             return $"{MediaBase}/{MarkersFileName}";
+        }
+
+        /// <summary>
+        /// Gets the URL the map's cruise-route file is served from.
+        /// </summary>
+        /// <returns>The root-relative media URL.</returns>
+        public static string CruisesUrl()
+        {
+            return $"{MediaBase}/{CruisesFileName}";
         }
 
         // Percent-encodes a single path segment (album id or file name) so it round

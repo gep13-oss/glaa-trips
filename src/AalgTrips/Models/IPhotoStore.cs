@@ -140,6 +140,60 @@ namespace AalgTrips.Models
         Task WriteMarkersAsync(IEnumerable<Marker> markers);
 
         /// <summary>
+        /// Lists the ids (folder-like names) of every cruise currently in the
+        /// store. Used to build the in-memory cruise catalogue at start-up.
+        /// </summary>
+        /// <returns>The cruise ids, in no particular order.</returns>
+        IReadOnlyList<string> ListCruiseIds();
+
+        /// <summary>
+        /// Reads a cruise's metadata (its <c>cruise.json</c>) if present.
+        /// </summary>
+        /// <param name="cruiseId">The cruise to read.</param>
+        /// <returns>The metadata, or <c>null</c> when the cruise has none.</returns>
+        CruiseMetaData TryReadCruise(string cruiseId);
+
+        /// <summary>
+        /// Determines whether a cruise exists in the store.
+        /// </summary>
+        /// <param name="cruiseId">The cruise to check.</param>
+        /// <returns><c>true</c> when the cruise exists.</returns>
+        bool CruiseExists(string cruiseId);
+
+        /// <summary>
+        /// Writes (creates or replaces) a cruise's metadata.
+        /// </summary>
+        /// <param name="cruiseId">The cruise to write.</param>
+        /// <param name="metadata">The metadata to store.</param>
+        /// <returns>A task that completes when the metadata is stored.</returns>
+        Task WriteCruiseAsync(string cruiseId, CruiseMetaData metadata);
+
+        /// <summary>
+        /// Deletes a cruise and all of its content (metadata and, later, its
+        /// per-day photos).
+        /// </summary>
+        /// <param name="cruiseId">The cruise to delete.</param>
+        /// <returns>A task that completes when the cruise is removed.</returns>
+        Task DeleteCruiseAsync(string cruiseId);
+
+        /// <summary>
+        /// Renames a cruise, moving all of its content from
+        /// <paramref name="oldCruiseId"/> to <paramref name="newCruiseId"/>. The
+        /// caller guarantees the new id is free.
+        /// </summary>
+        /// <param name="oldCruiseId">The cruise's current id.</param>
+        /// <param name="newCruiseId">The cruise's new id.</param>
+        /// <returns>A task that completes when the cruise has been moved.</returns>
+        Task RenameCruiseAsync(string oldCruiseId, string newCruiseId);
+
+        /// <summary>
+        /// Rewrites the map's cruise-route file from the supplied routes.
+        /// </summary>
+        /// <param name="routes">One route per cruise.</param>
+        /// <returns>A task that completes when the cruise-route file is stored.</returns>
+        Task WriteCruisesAsync(IEnumerable<CruiseRoute> routes);
+
+        /// <summary>
         /// Opens stored content by its store key (for example
         /// <c>{albumId}/{photo}</c>, <c>{albumId}/thumbnail/{thumb}</c> or
         /// <c>markers.json</c>) so the authenticated media endpoint can stream it.
@@ -173,5 +227,11 @@ namespace AalgTrips.Models
         /// </summary>
         /// <returns>The absolute-or-root-relative URL of <c>markers.json</c>.</returns>
         string MarkersUrl();
+
+        /// <summary>
+        /// Gets the public URL the map's cruise-route file is served from.
+        /// </summary>
+        /// <returns>The absolute-or-root-relative URL of <c>cruises.json</c>.</returns>
+        string CruisesUrl();
     }
 }

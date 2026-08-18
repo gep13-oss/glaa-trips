@@ -14,34 +14,8 @@ namespace AalgTrips.UnitTests
     /// proves the same behaviour end-to-end over HTTP.
     /// </summary>
     [TestFixture]
-    public class AlbumCollectionTests
+    public class AlbumCollectionTests : LocalStoreTestBase
     {
-        private string _root = string.Empty;
-        private string _albumsRoot = string.Empty;
-
-        [SetUp]
-        public void CreateRoot()
-        {
-            _root = Path.Combine(Path.GetTempPath(), "aalg-trips-unit-" + Guid.NewGuid().ToString("N"));
-            _albumsRoot = Path.Combine(_root, "albums");
-            Directory.CreateDirectory(_albumsRoot);
-        }
-
-        [TearDown]
-        public void DeleteRoot()
-        {
-            try
-            {
-                if (Directory.Exists(_root))
-                {
-                    Directory.Delete(_root, recursive: true);
-                }
-            }
-            catch
-            { /* best effort */
-            }
-        }
-
         [Test]
         public void Add_inserts_the_album_and_orders_newest_visited_first()
         {
@@ -91,7 +65,7 @@ namespace AalgTrips.UnitTests
             Assert.That(before.Photos, Has.Count.EqualTo(1), "precondition: the seeded album has a photo");
 
             // Rewrite the album's data.json the way an edit would, then reload it.
-            File.WriteAllText(Path.Combine(_albumsRoot, "trip", "data.json"), JsonSerializer.Serialize(Meta("Trip Renamed")));
+            File.WriteAllText(Path.Combine(AlbumsRoot, "trip", "data.json"), JsonSerializer.Serialize(Meta("Trip Renamed")));
             ac.ReloadAlbum("trip");
 
             var after = ac.Albums.Single(a => a.Id == "trip");
@@ -112,7 +86,7 @@ namespace AalgTrips.UnitTests
 
             await ac.WriteMarkersAsync();
 
-            var markers = ReadMarkers();
+            var markers = ReadRootJson<List<Marker>>(PhotoStoreConventions.MarkersFileName);
             Assert.That(markers.Select(m => m.Slug), Is.EquivalentTo(new[] { "edinburgh", "paris" }));
 
             var paris = markers.Single(m => m.Slug == "paris");
@@ -186,11 +160,6 @@ namespace AalgTrips.UnitTests
             Assert.That(ac.Albums.Select(a => a.Id), Is.EquivalentTo(new[] { "a", "b", "c" }), "only the original albums should remain");
         }
 
-        private LocalDiskPhotoStore Store()
-        {
-            return new LocalDiskPhotoStore(_albumsRoot);
-        }
-
         private static AlbumMetaData Meta(string displayName, DateTime? visited = null)
         {
             return new AlbumMetaData
@@ -199,35 +168,6 @@ namespace AalgTrips.UnitTests
                 Description = displayName + " description",
                 Visited = visited ?? new DateTime(2026, 1, 1),
             };
-        }
-
-        private string SeedAlbumOnDisk(string slug, string displayName, int photoCount, double latitude = 0, double longitude = 0, DateTime? visited = null)
-        {
-            var path = Path.Combine(_albumsRoot, slug);
-            Directory.CreateDirectory(path);
-
-            var meta = new AlbumMetaData
-            {
-                DisplayName = displayName,
-                Description = displayName + " description",
-                Visited = visited ?? new DateTime(2026, 1, 1),
-                Latitude = latitude,
-                Longitude = longitude,
-            };
-            File.WriteAllText(Path.Combine(path, "data.json"), JsonSerializer.Serialize(meta));
-
-            for (int i = 0; i < photoCount; i++)
-            {
-                File.WriteAllText(Path.Combine(path, $"photo-{i}.jpg"), string.Empty);
-            }
-
-            return path;
-        }
-
-        private List<Marker> ReadMarkers()
-        {
-            var json = File.ReadAllText(Path.Combine(_albumsRoot, "markers.json"));
-            return JsonSerializer.Deserialize<List<Marker>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
         }
     }
 }

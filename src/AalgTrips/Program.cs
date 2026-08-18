@@ -64,6 +64,7 @@ else
 }
 
 builder.Services.AddSingleton<AlbumCollection>();
+builder.Services.AddSingleton<CruiseCollection>();
 builder.Services.AddSingleton<ImageProcessor>();
 builder.Services.AddSingleton<UserAuthenticator>();
 builder.Services.AddAuthentication(options =>
@@ -176,11 +177,13 @@ app.MapGet("/albums/{**key}", (string key, IPhotoStore store, HttpContext http) 
     }
 
     // Photos and thumbnails are immutable under a given key (a new photo always
-    // takes a new name), so they can be cached hard. markers.json is the
-    // exception: it is rewritten on every album create/edit/delete, so a long
-    // cache would leave the map showing a stale pin set — revalidate it instead.
-    bool isMarkers = key.Equals(PhotoStoreConventions.MarkersFileName, StringComparison.OrdinalIgnoreCase);
-    http.Response.Headers[HeaderNames.CacheControl] = isMarkers ? "no-cache" : "private, max-age=86400";
+    // takes a new name), so they can be cached hard. markers.json and cruises.json
+    // are the exception: they are rewritten on every album/cruise create/edit/
+    // delete, so a long cache would leave the map showing a stale set — revalidate
+    // them instead.
+    bool isGeneratedIndex = key.Equals(PhotoStoreConventions.MarkersFileName, StringComparison.OrdinalIgnoreCase)
+        || key.Equals(PhotoStoreConventions.CruisesFileName, StringComparison.OrdinalIgnoreCase);
+    http.Response.Headers[HeaderNames.CacheControl] = isGeneratedIndex ? "no-cache" : "private, max-age=86400";
     return Results.Stream(content, ContentTypeForKey(key));
 }).RequireAuthorization();
 
@@ -195,6 +198,18 @@ try
 catch (Exception ex)
 {
     app.Logger.LogWarning(ex, "Could not rebuild markers.json on startup.");
+}
+
+// Rebuild the map's cruise-route file from the current cruise set on startup, for
+// the same self-healing reason as the markers above. Kept in its own try so a
+// cruise-side failure cannot stop the albums' markers from being written.
+try
+{
+    await app.Services.GetRequiredService<CruiseCollection>().WriteCruisesAsync();
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning(ex, "Could not rebuild cruises.json on startup.");
 }
 
 app.Run();

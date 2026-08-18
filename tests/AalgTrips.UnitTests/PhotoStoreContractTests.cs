@@ -12,6 +12,7 @@ namespace AalgTrips.UnitTests
     public abstract class PhotoStoreContractTests
     {
         private const string Album = "sample-trip";
+        private const string Cruise = "sample-cruise";
 
         /// <summary>
         /// Creates a fresh, isolated store for a single test.
@@ -188,6 +189,115 @@ namespace AalgTrips.UnitTests
             await store.WriteMarkersAsync(new[] { new Marker { Lat = 55.95, Long = -3.19, Slug = Album } });
 
             Assert.That(store.MarkersUrl(), Is.Not.Empty);
+        }
+
+        [Test]
+        public async Task Cruise_metadata_round_trips_and_the_cruise_is_listed()
+        {
+            var store = CreateStore();
+            var metadata = new CruiseMetaData
+            {
+                DisplayName = "Mediterranean Cruise",
+                Description = "Round the Med",
+                StartDate = new DateTime(2025, 7, 27),
+                EndDate = new DateTime(2025, 8, 3),
+                People = new List<string> { "Gary", "Lynn" },
+                Stops = new List<CruiseStop>
+                {
+                    new CruiseStop { Date = new DateTime(2025, 7, 27), Name = "Rome", Depart = "17:00", Latitude = 42.09, Longitude = 11.80, Trips = new List<string> { "colosseum" } },
+                    new CruiseStop { Date = new DateTime(2025, 7, 28), Name = "Cruising", AtSea = true },
+                },
+            };
+
+            await store.WriteCruiseAsync(Cruise, metadata);
+
+            var read = store.TryReadCruise(Cruise);
+            Assert.Multiple(() =>
+            {
+                Assert.That(store.CruiseExists(Cruise), Is.True);
+                Assert.That(store.ListCruiseIds(), Does.Contain(Cruise));
+                Assert.That(read, Is.Not.Null);
+                Assert.That(read.DisplayName, Is.EqualTo("Mediterranean Cruise"));
+                Assert.That(read.People, Is.EqualTo(new[] { "Gary", "Lynn" }));
+                Assert.That(read.Stops, Has.Count.EqualTo(2));
+
+                // The port day keeps its coordinates and linked trips; the day at
+                // sea round-trips with no coordinates.
+                Assert.That(read.Stops[0].Latitude, Is.EqualTo(42.09));
+                Assert.That(read.Stops[0].Trips, Is.EqualTo(new[] { "colosseum" }));
+                Assert.That(read.Stops[1].AtSea, Is.True);
+                Assert.That(read.Stops[1].Latitude, Is.Null);
+            });
+        }
+
+        [Test]
+        public void Missing_cruise_reads_as_null()
+        {
+            var store = CreateStore();
+
+            Assert.That(store.TryReadCruise("no-such-cruise"), Is.Null);
+        }
+
+        [Test]
+        public async Task A_cruise_is_not_listed_as_an_album()
+        {
+            var store = CreateStore();
+
+            await store.WriteCruiseAsync(Cruise, new CruiseMetaData { DisplayName = "Sample" });
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(store.CruiseExists(Cruise), Is.True);
+                Assert.That(store.ListAlbumIds(), Does.Not.Contain(PhotoStoreConventions.CruisesFolder), "the cruises area must not surface as an album");
+                Assert.That(store.ListAlbumIds(), Does.Not.Contain(Cruise));
+                Assert.That(store.AlbumExists(Cruise), Is.False);
+            });
+        }
+
+        [Test]
+        public async Task Renaming_a_cruise_moves_its_content_to_the_new_id()
+        {
+            var store = CreateStore();
+            await store.WriteCruiseAsync(Cruise, new CruiseMetaData { DisplayName = "Sample" });
+
+            await store.RenameCruiseAsync(Cruise, "renamed-cruise");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(store.CruiseExists("renamed-cruise"), Is.True);
+                Assert.That(store.TryReadCruise("renamed-cruise")?.DisplayName, Is.EqualTo("Sample"), "metadata moves with the cruise");
+                Assert.That(store.CruiseExists(Cruise), Is.False, "nothing should be left under the old id");
+                Assert.That(store.TryReadCruise(Cruise), Is.Null);
+            });
+        }
+
+        [Test]
+        public async Task Deleting_a_cruise_removes_it()
+        {
+            var store = CreateStore();
+            await store.WriteCruiseAsync(Cruise, new CruiseMetaData { DisplayName = "Sample" });
+
+            await store.DeleteCruiseAsync(Cruise);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(store.CruiseExists(Cruise), Is.False);
+                Assert.That(store.TryReadCruise(Cruise), Is.Null);
+                Assert.That(store.ListCruiseIds(), Does.Not.Contain(Cruise));
+            });
+        }
+
+        [Test]
+        public async Task Writing_cruises_succeeds_and_the_cruise_url_is_set()
+        {
+            var store = CreateStore();
+
+            await store.WriteCruisesAsync(new[]
+            {
+                new CruiseRoute { Slug = Cruise, Name = "Sample", Ports = new List<CruisePort>() },
+            });
+
+            Assert.That(store.CruisesUrl(), Is.Not.Empty);
         }
 
         private static byte[] ReadAll(Stream stream)

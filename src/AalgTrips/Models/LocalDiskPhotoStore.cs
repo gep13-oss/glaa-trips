@@ -40,6 +40,7 @@ namespace AalgTrips.Models
 
             return Directory.EnumerateDirectories(_root)
                 .Select(d => new DirectoryInfo(d).Name)
+                .Where(name => !name.Equals(PhotoStoreConventions.CruisesFolder, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
 
@@ -220,6 +221,86 @@ namespace AalgTrips.Models
         }
 
         /// <inheritdoc />
+        public IReadOnlyList<string> ListCruiseIds()
+        {
+            string cruisesRoot = CruisesRoot();
+
+            if (!Directory.Exists(cruisesRoot))
+            {
+                return Array.Empty<string>();
+            }
+
+            return Directory.EnumerateDirectories(cruisesRoot)
+                .Select(d => new DirectoryInfo(d).Name)
+                .ToList();
+        }
+
+        /// <inheritdoc />
+        public CruiseMetaData TryReadCruise(string cruiseId)
+        {
+            string metadataPath = Path.Combine(CruiseDir(cruiseId), PhotoStoreConventions.CruiseMetadataFileName);
+
+            if (!File.Exists(metadataPath))
+            {
+                return null;
+            }
+
+            return JsonSerializer.Deserialize<CruiseMetaData>(File.ReadAllText(metadataPath));
+        }
+
+        /// <inheritdoc />
+        public bool CruiseExists(string cruiseId)
+        {
+            return Directory.Exists(CruiseDir(cruiseId));
+        }
+
+        /// <inheritdoc />
+        public async Task WriteCruiseAsync(string cruiseId, CruiseMetaData metadata)
+        {
+            string dir = CruiseDir(cruiseId);
+            Directory.CreateDirectory(dir);
+
+            using var stream = File.Create(Path.Combine(dir, PhotoStoreConventions.CruiseMetadataFileName));
+            await JsonSerializer.SerializeAsync(stream, metadata);
+        }
+
+        /// <inheritdoc />
+        public Task DeleteCruiseAsync(string cruiseId)
+        {
+            string dir = CruiseDir(cruiseId);
+
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task RenameCruiseAsync(string oldCruiseId, string newCruiseId)
+        {
+            string source = CruiseDir(oldCruiseId);
+            string destination = CruiseDir(newCruiseId);
+
+            if (Directory.Exists(source))
+            {
+                Directory.Move(source, destination);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public async Task WriteCruisesAsync(IEnumerable<CruiseRoute> routes)
+        {
+            Directory.CreateDirectory(_root);
+
+            using var stream = File.Create(Path.Combine(_root, PhotoStoreConventions.CruisesFileName));
+            await JsonSerializer.SerializeAsync(stream, routes);
+        }
+
+        /// <inheritdoc />
         public bool TryOpenContent(string key, out Stream content)
         {
             content = null;
@@ -264,9 +345,25 @@ namespace AalgTrips.Models
             return PhotoStoreConventions.MarkersUrl();
         }
 
+        /// <inheritdoc />
+        public string CruisesUrl()
+        {
+            return PhotoStoreConventions.CruisesUrl();
+        }
+
         private string AlbumDir(string albumId)
         {
             return SafeCombine(_root, albumId);
+        }
+
+        private string CruisesRoot()
+        {
+            return Path.Combine(_root, PhotoStoreConventions.CruisesFolder);
+        }
+
+        private string CruiseDir(string cruiseId)
+        {
+            return SafeCombine(CruisesRoot(), cruiseId);
         }
 
         private string PhotoPath(string albumId, string fileName)

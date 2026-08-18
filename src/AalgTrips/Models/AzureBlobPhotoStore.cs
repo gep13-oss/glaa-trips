@@ -49,7 +49,14 @@ namespace AalgTrips.Models
             {
                 if (item.IsPrefix)
                 {
-                    ids.Add(item.Prefix.TrimEnd('/'));
+                    string id = item.Prefix.TrimEnd('/');
+
+                    // Cruise content lives under a top-level "cruises/" prefix; it is
+                    // a separate catalogue, so keep it out of the album listing.
+                    if (!id.Equals(PhotoStoreConventions.CruisesFolder, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ids.Add(id);
+                    }
                 }
             }
 
@@ -217,6 +224,89 @@ namespace AalgTrips.Models
         }
 
         /// <inheritdoc />
+        public IReadOnlyList<string> ListCruiseIds()
+        {
+            var ids = new List<string>();
+            string prefix = CruisesPrefix();
+
+            foreach (var item in _container.GetBlobsByHierarchy(BlobTraits.None, BlobStates.None, "/", prefix, default))
+            {
+                if (item.IsPrefix)
+                {
+                    // item.Prefix is "cruises/{cruiseId}/"; take the id between them.
+                    ids.Add(item.Prefix.Substring(prefix.Length).TrimEnd('/'));
+                }
+            }
+
+            return ids;
+        }
+
+        /// <inheritdoc />
+        public CruiseMetaData TryReadCruise(string cruiseId)
+        {
+            var blob = _container.GetBlobClient(CruiseMetadataKey(cruiseId));
+
+            if (!blob.Exists())
+            {
+                return null;
+            }
+
+            BlobDownloadResult download = blob.DownloadContent();
+            return JsonSerializer.Deserialize<CruiseMetaData>(download.Content.ToString());
+        }
+
+        /// <inheritdoc />
+        public bool CruiseExists(string cruiseId)
+        {
+            return _container.GetBlobs(BlobTraits.None, BlobStates.None, CruisePrefix(cruiseId), default).Any();
+        }
+
+        /// <inheritdoc />
+        public async Task WriteCruiseAsync(string cruiseId, CruiseMetaData metadata)
+        {
+            using var stream = new MemoryStream();
+            await JsonSerializer.SerializeAsync(stream, metadata);
+            stream.Position = 0;
+            await _container.GetBlobClient(CruiseMetadataKey(cruiseId)).UploadAsync(stream, overwrite: true);
+        }
+
+        /// <inheritdoc />
+        public async Task DeleteCruiseAsync(string cruiseId)
+        {
+            foreach (var blob in _container.GetBlobs(BlobTraits.None, BlobStates.None, CruisePrefix(cruiseId), default).ToList())
+            {
+                await _container.GetBlobClient(blob.Name).DeleteIfExistsAsync();
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task RenameCruiseAsync(string oldCruiseId, string newCruiseId)
+        {
+            string sourcePrefix = CruisePrefix(oldCruiseId);
+            string destinationPrefix = CruisePrefix(newCruiseId);
+
+            // Blob storage has no folder move, so each blob under the cruise's prefix
+            // is server-side copied to the new prefix and then removed. The listing
+            // is materialised first so deleting a source blob does not disturb the
+            // enumeration.
+            foreach (var blob in _container.GetBlobs(BlobTraits.None, BlobStates.None, sourcePrefix, default).ToList())
+            {
+                string destination = destinationPrefix + blob.Name.Substring(sourcePrefix.Length);
+                await CopyBlobAsync(blob.Name, destination);
+                await _container.GetBlobClient(blob.Name).DeleteIfExistsAsync();
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task WriteCruisesAsync(IEnumerable<CruiseRoute> routes)
+        {
+            using var stream = new MemoryStream();
+            await JsonSerializer.SerializeAsync(stream, routes);
+            stream.Position = 0;
+            await _container.GetBlobClient(PhotoStoreConventions.CruisesFileName).UploadAsync(stream, overwrite: true);
+        }
+
+        /// <inheritdoc />
         public bool TryOpenContent(string key, out Stream content)
         {
             content = null;
@@ -250,9 +340,30 @@ namespace AalgTrips.Models
             return PhotoStoreConventions.MarkersUrl();
         }
 
+        /// <inheritdoc />
+        public string CruisesUrl()
+        {
+            return PhotoStoreConventions.CruisesUrl();
+        }
+
         private static string MetadataKey(string albumId)
         {
             return $"{albumId}/{PhotoStoreConventions.MetadataFileName}";
+        }
+
+        private static string CruisesPrefix()
+        {
+            return $"{PhotoStoreConventions.CruisesFolder}/";
+        }
+
+        private static string CruisePrefix(string cruiseId)
+        {
+            return $"{PhotoStoreConventions.CruisesFolder}/{cruiseId}/";
+        }
+
+        private static string CruiseMetadataKey(string cruiseId)
+        {
+            return $"{PhotoStoreConventions.CruisesFolder}/{cruiseId}/{PhotoStoreConventions.CruiseMetadataFileName}";
         }
 
         private static string PhotoKey(string albumId, string fileName)
