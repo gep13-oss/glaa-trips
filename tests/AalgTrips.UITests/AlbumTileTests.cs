@@ -27,6 +27,10 @@ namespace AalgTrips.UITests
                 await Expect(tile.Locator(".trip-card__people")).ToContainTextAsync("Amelia");
                 await Expect(tile.Locator(".trip-card__people")).ToContainTextAsync("Gary");
 
+                // The tile date shows the full day, not just month and year, so the
+                // trip created for 7 July 2026 reads "7 JUL 2026".
+                await Expect(tile.Locator(".date")).ToHaveTextAsync("7 JUL 2026");
+
                 // The seeded sample trip is not a castle and has no people, so its
                 // tile carries neither the badge nor a people line.
                 var sample = Page.Locator($".trip-card[href='/album/{ServerFixture.SampleAlbumSlug}/']");

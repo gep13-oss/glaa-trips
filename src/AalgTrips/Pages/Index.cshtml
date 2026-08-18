@@ -133,7 +133,7 @@ else
                         <p class="trip-card__dossier">
                             <span class="coord">@album.Coordinates</span>
                             <span class="sep">·</span>
-                            <span class="date">@album.Visited.ToString("MMM yyyy").ToUpperInvariant()</span>
+                            <span class="date">@album.Visited.ToString("d MMM yyyy").ToUpperInvariant()</span>
                             <span class="sep">·</span>
                             <span class="count">@album.Photos.Count photo@(album.Photos.Count == 1 ? "" : "s")</span>
                         </p>
